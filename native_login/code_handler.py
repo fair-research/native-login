@@ -40,11 +40,12 @@ class CodeHandler:
 class InputCodeHandler(CodeHandler):
 
     def get_code(self):
+        self.write_message('Please Paste your Auth Code Below: ')
         return input()
 
 
-class LocalServerHandler(CodeHandler):
+class LocalServerCodeHandler(CodeHandler):
 
     def __init__(self):
-        super(LocalServerHandler, self).__init__()
-        self.redirect_uri = 'https://auth.globus.org/v2/web/auth-code'
+        super(LocalServerCodeHandler, self).__init__()
+        self.redirect_uri = 'http://localhost'

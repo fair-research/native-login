@@ -1,0 +1,4 @@
+
+
+class LocalServerError(Exception):
+    pass
