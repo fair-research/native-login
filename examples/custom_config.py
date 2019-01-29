@@ -22,10 +22,10 @@ class MyTokenStorage(TokenStorage):
 
 
 # Using your custom Token Handler:
-app = NativeClient(client_id='b61613f8-0da8-4be7-81aa-1c89f2c0fe9f',
+app = NativeClient(client_id='',
                    token_handler=MyTokenStorage())
 
-# Calls write()
+# Calls read() then write()
 app.login()
 
 # Calls read()
