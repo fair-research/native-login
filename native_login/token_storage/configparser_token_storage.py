@@ -1,5 +1,5 @@
 import os
-from six.moves.configparser import ConfigParser
+from six.moves.configparser import ConfigParser, NoSectionError
 
 from native_login.token_storage.base import TokenStorage
 
@@ -9,18 +9,25 @@ class ConfigParserTokenStorage(TokenStorage):
     CONFIG_TOKEN_GROUPS = "token_groups"
     CFG_SECTION = 'tokens'
 
+    def __init__(self, filename=None, section=None):
+        super(ConfigParserTokenStorage, self).__init__(filename=filename)
+        self.section = section or self.CFG_SECTION
+
     def write(self, tokens):
         config = ConfigParser()
-        config.add_section(self.CFG_SECTION)
+        config.add_section(self.section)
         for name, value in tokens.items():
-            config.set(self.CFG_SECTION, name, value)
+            config.set(self.section, name, value)
         with open(self.filename, 'w') as configfile:
             config.write(configfile)
 
     def read(self):
         config = ConfigParser()
         config.read(self.filename)
-        return dict(config.items(self.CFG_SECTION))
+        try:
+            return dict(config.items(self.section))
+        except NoSectionError:
+            config.add_section(self.section)
 
     def clear(self):
         os.remove(self.filename)
@@ -91,6 +98,9 @@ class ConfigParserTokenStorage(TokenStorage):
             }, ...
         }
         """
+        if not config_items:
+            return {}
+
         token_groups = {}
 
         tsets = config_items.get(self.CONFIG_TOKEN_GROUPS)
@@ -111,3 +121,9 @@ class ConfigParserTokenStorage(TokenStorage):
 
     def serialize_token(self, resource_server, token=''):
         return '{}_{}'.format(resource_server.replace('.', '_'), token)
+
+
+class MultiClientTokenStorage(ConfigParserTokenStorage):
+
+    def set_client_id(self, client_id):
+        self.section = client_id

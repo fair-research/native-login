@@ -1,5 +1,6 @@
 from native_login.client import NativeClient
 from native_login.token_storage import (ConfigParserTokenStorage,
+                                        MultiClientTokenStorage,
                                         JSONTokenStorage,
                                         TokenStorage,)
 from native_login.code_handler import (InputCodeHandler, CodeHandler)
