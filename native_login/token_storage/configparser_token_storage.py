@@ -13,21 +13,26 @@ class ConfigParserTokenStorage(TokenStorage):
         super(ConfigParserTokenStorage, self).__init__(filename=filename)
         self.section = section or self.CFG_SECTION
 
-    def write(self, tokens):
+    def read_config_parser(self):
         config = ConfigParser()
-        config.add_section(self.section)
-        for name, value in tokens.items():
-            config.set(self.section, name, value)
+        config.read(self.filename)
+        if self.section not in config.sections():
+            config.add_section(self.section)
+        return config
+
+    def write_config_parser(self, config):
         with open(self.filename, 'w') as configfile:
             config.write(configfile)
 
+    def write(self, tokens):
+        config = self.read_config_parser()
+        for name, value in tokens.items():
+            config.set(self.section, name, value)
+        self.write_config_parser(config)
+
     def read(self):
-        config = ConfigParser()
-        config.read(self.filename)
-        try:
-            return dict(config.items(self.section))
-        except NoSectionError:
-            config.add_section(self.section)
+        config = self.read_config_parser()
+        return dict(config.items()).get(self.section)
 
     def clear(self):
         os.remove(self.filename)
@@ -127,3 +132,9 @@ class MultiClientTokenStorage(ConfigParserTokenStorage):
 
     def set_client_id(self, client_id):
         self.section = client_id
+
+    def clear(self):
+        config = self.read_config_parser()
+        if self.section in config.sections():
+            config.remove_section(self.section)
+            self.write_config_parser(config)
