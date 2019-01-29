@@ -1,12 +1,23 @@
 import os
 import webbrowser
+from contextlib import contextmanager
 
 
 class CodeHandler:
 
     def __init__(self):
         self.message = 'Please paste the following URL in a browser: \n{}'
-        self.redirect_uri = 'https://auth.globus.org/v2/web/auth-code'
+
+    @contextmanager
+    def start(self):
+        """
+        Do any required setup, such as setting `self.redirect_uri`. Called
+        right before authenticate().
+        """
+        yield
+
+    def get_redirect_uri(self):
+        return None
 
     def authenticate(self, url, no_browser=False):
         """
@@ -18,13 +29,13 @@ class CodeHandler:
         if no_browser is False and not self.is_remote_session():
             webbrowser.open(url, new=1)
         else:
-            print(self.message)
+            self.write_message(self.message)
         return self.get_code()
 
     def write_message(self, message):
         """
         This will likely be the only place where output needs to be directly
-        written to the user. Some CLIs like click may prefer click.echo here
+        written to the user. Some CLIs like Click may prefer click.echo here
         rather than print.
         :param message: Direct Standard Output message for user consumption
         """
@@ -42,10 +53,3 @@ class InputCodeHandler(CodeHandler):
     def get_code(self):
         self.write_message('Please Paste your Auth Code Below: ')
         return input()
-
-
-class LocalServerCodeHandler(CodeHandler):
-
-    def __init__(self):
-        super(LocalServerCodeHandler, self).__init__()
-        self.redirect_uri = 'http://localhost'
