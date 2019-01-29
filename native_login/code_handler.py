@@ -1,4 +1,5 @@
 import os
+import sys
 import webbrowser
 from contextlib import contextmanager
 
@@ -30,7 +31,12 @@ class CodeHandler(object):
             webbrowser.open(url, new=1)
         else:
             self.write_message(self.message)
-        return self.get_code()
+        try:
+            return self.get_code()
+        except KeyboardInterrupt:
+            self.write_message('Interrupt Received. '
+                               'Canceling authentication...')
+            sys.exit(-1)
 
     def write_message(self, message):
         """

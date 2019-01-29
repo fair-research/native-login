@@ -200,7 +200,7 @@ class RedirectHTTPServer(HTTPServer, object):
         # https://bugs.python.org/issue1360
         try:
             return self._auth_code_queue.get(block=True, timeout=3600)
-        except (queue.Empty, KeyboardInterrupt):
+        except queue.Empty:
             raise LocalServerError()
         finally:
             # shutdown() stops the server thread
