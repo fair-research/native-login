@@ -3,7 +3,7 @@ import webbrowser
 from contextlib import contextmanager
 
 
-class CodeHandler:
+class CodeHandler(object):
 
     def __init__(self):
         self.message = 'Please paste the following URL in a browser: \n{}'

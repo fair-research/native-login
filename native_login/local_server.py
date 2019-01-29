@@ -155,7 +155,8 @@ class RedirectHTTPServer(HTTPServer, object):
     VARS_KEYS = {'success', 'error'}
 
     def __init__(self, template, vars, listen=None, handler_class=None):
-        super(RedirectHTTPServer, self).__init__(
+        HTTPServer.__init__(
+            self,
             listen or RedirectHTTPServer.DEFAULT_LISTEN,
             handler_class or RedirectHTTPServer.DEFAULT_HANDLER
         )
