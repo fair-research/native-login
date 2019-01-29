@@ -1,10 +1,10 @@
 import os
 from six.moves.configparser import ConfigParser
 
-from native_login.token_handlers.base import TokenHandler
+from native_login.token_storage.base import TokenStorage
 
 
-class ConfigParserTokenHandler(TokenHandler):
+class ConfigParserTokenStorage(TokenStorage):
 
     CONFIG_TOKEN_GROUPS = "token_groups"
     CFG_SECTION = 'tokens'

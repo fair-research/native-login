@@ -1,8 +1,8 @@
 import json
-from native_login.token_handlers.base import TokenHandler
+from native_login.token_storage.base import TokenStorage
 
 
-class JSONTokenHandler(TokenHandler):
+class JSONTokenStorage(TokenStorage):
 
     def write(self, tokens):
         with open(self.filename, 'w+') as fh:

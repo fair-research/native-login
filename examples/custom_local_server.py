@@ -1,5 +1,4 @@
-from native_login.client import NativeClient
-from native_login.local_server import LocalServerCodeHandler
+from native_login import NativeClient, LocalServerCodeHandler
 
 client_id = 'b61613f8-0da8-4be7-81aa-1c89f2c0fe9f'
 
@@ -38,4 +37,6 @@ app = NativeClient(
     # Automatically populates 'app_name' in template if defined
     app_name='My Brand New App',
     )
-app.login(no_local_server=False)
+tokens = app.login(no_local_server=False)
+
+print(tokens)

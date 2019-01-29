@@ -8,10 +8,10 @@ from native_login.exc import LoadError, TokensExpired, ScopesMismatch
 
 class NativeClient(NativeAppAuthClient):
 
-    def __init__(self, token_handler=None, local_server_code_handler=None,
+    def __init__(self, token_storage=None, local_server_code_handler=None,
                  requested_scopes=None, *args, **kwargs):
         super(NativeClient, self).__init__(*args, **kwargs)
-        self.token_handler = token_handler
+        self.token_storage = token_storage
         self.requested_scopes = requested_scopes
         self.app_name = kwargs.get('app_name') or 'My App'
         self.local_server = (local_server_code_handler or
@@ -42,14 +42,14 @@ class NativeClient(NativeAppAuthClient):
         return token_response
 
     def save_tokens(self, tokens):
-        if self.token_handler is not None:
-            serialized_tokens = self.token_handler.serialize(tokens)
-            return self.token_handler.write(serialized_tokens)
+        if self.token_storage is not None:
+            serialized_tokens = self.token_storage.serialize(tokens)
+            return self.token_storage.write(serialized_tokens)
 
     def load_tokens(self, requested_scopes=None):
-        if self.token_handler is not None:
-            serialized_tokens = self.token_handler.read()
-            tokens = self.token_handler.deserialize(serialized_tokens)
+        if self.token_storage is not None:
+            serialized_tokens = self.token_storage.read()
+            tokens = self.token_storage.deserialize(serialized_tokens)
 
             if not tokens:
                 raise LoadError('No Tokens loaded')
@@ -69,12 +69,16 @@ class NativeClient(NativeAppAuthClient):
                 raise TokensExpired()
 
             return tokens
+        raise LoadError('No token_storage set on app. (Try JSONTokenStorage)')
 
     def revoke_tokens(self):
-        tokens = self.load_tokens()
-        for rs, tok_set in tokens.items():
-            self.oauth2_revoke_token(tok_set.get('access_token'))
-            self.oauth2_revoke_token(tok_set.get('refresh_token'))
-        else:
-            return False
-        return True
+        try:
+            tokens = self.load_tokens()
+            for rs, tok_set in tokens.items():
+                self.oauth2_revoke_token(tok_set.get('access_token'))
+                self.oauth2_revoke_token(tok_set.get('refresh_token'))
+            self.token_storage.clear_tokens()
+            return True
+        except LoadError:
+            pass
+        return False

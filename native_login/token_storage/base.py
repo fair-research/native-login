@@ -1,7 +1,7 @@
 import os
 
 
-class TokenHandler:
+class TokenStorage:
 
     DEFAULT_FILENAME = os.path.expanduser('~/.globus-native-apps.cfg')
     TOKEN_KEYS = [
@@ -16,7 +16,7 @@ class TokenHandler:
                      "resource_server"]
 
     def __init__(self, filename=None):
-        self.filename = filename or TokenHandler.DEFAULT_FILENAME
+        self.filename = filename or self.DEFAULT_FILENAME
 
     def write(self, token_response):
         raise NotImplemented()

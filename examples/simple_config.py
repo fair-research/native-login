@@ -5,14 +5,22 @@ a custom client and want more control over your config, see the 'custom config'
 module.
 """
 
-from native_login.client import NativeClient
-from native_login.token_handlers.json_token_handler import JSONTokenHandler
+from native_login import NativeClient, JSONTokenStorage, LoadError
 
-app = NativeClient(client_id='b61613f8-0da8-4be7-81aa-1c89f2c0fe9f',
-                   token_handler=JSONTokenHandler())
+# Registered client on http://developers.globus.org
+CLIENT_ID = '<CLIENT_ID>'
 
-# saves tokens at ~/.globus-native-apps.cfg
-app.login()
+app = NativeClient(client_id=CLIENT_ID, token_handler=JSONTokenStorage())
 
-# loads tokens saved to file
-tokens = app.load_tokens()
+try:
+    # Loads tokens instead of doing a login flow
+    tokens = app.load_tokens()
+except LoadError:
+    # saves tokens at ~/.globus-native-apps.cfg
+    tokens = app.login()
+
+# Show tokens
+print(tokens)
+
+# Revoke tokens and clear them from the config file when finished
+app.revoke_tokens()
