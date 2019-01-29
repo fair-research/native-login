@@ -8,16 +8,13 @@ module.
 from native_login import NativeClient, JSONTokenStorage, LoadError
 
 # Registered client on http://developers.globus.org
-CLIENT_ID = '<CLIENT_ID>'
+CLIENT_ID = 'b61613f8-0da8-4be7-81aa-1c89f2c0fe9f'
 
-app = NativeClient(client_id=CLIENT_ID, token_handler=JSONTokenStorage())
+app = NativeClient(client_id=CLIENT_ID,
+                   token_handler=JSONTokenStorage('mytokens.json')
+                   )
 
-try:
-    # Loads tokens instead of doing a login flow
-    tokens = app.load_tokens()
-except LoadError:
-    # saves tokens at ~/.globus-native-apps.cfg
-    tokens = app.login()
+tokens = app.login()
 
 # Show tokens
 print(tokens)

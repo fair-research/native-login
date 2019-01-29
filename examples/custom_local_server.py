@@ -1,6 +1,6 @@
 from native_login import NativeClient, LocalServerCodeHandler
 
-client_id = 'b61613f8-0da8-4be7-81aa-1c89f2c0fe9f'
+client_id = '<client_id>'
 
 template = """
 <h1>Hello $app_name!</h1>
