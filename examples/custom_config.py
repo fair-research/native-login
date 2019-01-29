@@ -2,7 +2,7 @@
 Example for a custom config.
 
 At some point, your client will probably need to have it's own config mechanism
-for your apps specific config values. To use a custom config, all you need to
+for your app-specific config values. To use a custom config, all you need to
 do is provide the read/write/clear hooks.
 """
 
