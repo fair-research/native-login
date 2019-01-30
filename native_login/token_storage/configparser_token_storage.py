@@ -32,7 +32,7 @@ class ConfigParserTokenStorage(TokenStorage):
 
     def read(self):
         config = self.read_config_parser()
-        return dict(config.items()).get(self.section)
+        return dict(config.items(self.section))
 
     def clear(self):
         os.remove(self.filename)

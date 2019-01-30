@@ -1,7 +1,7 @@
 import os
 
 
-class TokenStorage:
+class TokenStorage(object):
 
     DEFAULT_FILENAME = os.path.expanduser('~/.globus-native-apps.cfg')
     TOKEN_KEYS = [
