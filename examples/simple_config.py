@@ -7,12 +7,11 @@ module.
 
 from native_login import NativeClient, JSONTokenStorage
 
-# Registered client on http://developers.globus.org
-CLIENT_ID = ''
-
-app = NativeClient(client_id=CLIENT_ID,
-                   token_storage=JSONTokenStorage('mytokens.json')
-                   )
+app = NativeClient(
+    # Registered client on http://developers.globus.org
+    client_id='7414f0b4-7d05-4bb6-bb00-076fa3f17cf5',
+    token_storage=JSONTokenStorage('mytokens.json')
+)
 
 tokens = app.login()
 

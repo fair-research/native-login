@@ -1,7 +1,5 @@
 from native_login import NativeClient, LocalServerCodeHandler
 
-client_id = '<client_id>'
-
 template = """
 <h1>Hello $app_name!</h1>
 <p>
@@ -29,14 +27,16 @@ template_vars = {
     }
 }
 
-code_handler = LocalServerCodeHandler(template, template_vars)
-
 app = NativeClient(
-    client_id=client_id,
-    local_server_code_handler=code_handler,
+    client_id='7414f0b4-7d05-4bb6-bb00-076fa3f17cf5',
+    # Turn off token storage for this example
+    token_storage=None,
+    # Use our custom local server
+    local_server_code_handler=LocalServerCodeHandler(template, template_vars),
     # Automatically populates 'app_name' in template if defined
-    app_name='My Brand New App',
-    )
+    app_name='Native Login Examples',
+)
+
 tokens = app.login(no_local_server=False)
 
 print(tokens)

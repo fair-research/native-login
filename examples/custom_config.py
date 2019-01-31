@@ -11,13 +11,13 @@ from myconfig import config
 
 class MyTokenStorage(TokenStorage):
 
-    def write(self, tokens):
+    def write_tokens(self, tokens):
         config.save(tokens, section='tokens')
 
-    def read(self):
+    def read_tokens(self):
         config.load(section='tokens')
 
-    def clear(self):
+    def clear_tokens(self):
         config.remove(section='tokens')
 
 
