@@ -1,10 +1,14 @@
 
 
-class LocalServerError(Exception):
+class LoginException(Exception):
     pass
 
 
-class LoadError(Exception):
+class LocalServerError(LoginException):
+    pass
+
+
+class LoadError(LoginException):
     pass
 
 

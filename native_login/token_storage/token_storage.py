@@ -18,17 +18,22 @@ class TokenStorage(object):
     def __init__(self, filename=None):
         self.filename = filename or self.DEFAULT_FILENAME
 
-    def write(self, token_response):
+    def write_tokens(self, token_response):
+        """
+
+        :param token_response:
+        :return:
+        """
         raise NotImplemented()
 
-    def read(self):
+    def read_tokens(self):
         raise NotImplemented()
 
-    def clear(self):
+    def clear_tokens(self):
         raise NotImplemented()
 
-    def serialize(self, oauth_token_response):
+    def serialize_tokens(self, oauth_token_response):
         return oauth_token_response.by_resource_server
 
-    def deserialize(self, saved_tokens):
+    def deserialize_tokens(self, saved_tokens):
         return saved_tokens

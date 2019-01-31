@@ -1,10 +1,11 @@
-import time
 from globus_sdk import NativeAppAuthClient
 
 from native_login.code_handler import InputCodeHandler
 from native_login.local_server import LocalServerCodeHandler
-from native_login.token_storage import MultiClientTokenStorage
-from native_login.exc import LoadError, TokensExpired, ScopesMismatch
+from native_login.token_storage import (
+    MultiClientTokenStorage, check_expired, check_scopes
+)
+from native_login.exc import LoadError
 
 
 class NativeClient(NativeAppAuthClient):
@@ -27,7 +28,7 @@ class NativeClient(NativeAppAuthClient):
         if force is False:
             try:
                 return self.load_tokens(requested_scopes=requested_scopes)
-            except LoadError:
+            except (LoadError, Exception):
                 pass
 
         grant_name = prefill_named_grant or '{} Login'.format(self.app_name)
@@ -52,42 +53,45 @@ class NativeClient(NativeAppAuthClient):
 
     def save_tokens(self, tokens):
         if self.token_storage is not None:
-            serialized_tokens = self.token_storage.serialize(tokens)
-            return self.token_storage.write(serialized_tokens)
+            serialized_tokens = self.token_storage.serialize_tokens(tokens)
+            return self.token_storage.write_tokens(serialized_tokens)
 
-    def load_tokens(self, requested_scopes=None):
+    def _load_raw_tokens(self):
+        """
+        Loads tokens without checking them
+        :return: tokens by resource server, or an exception if that fails
+        """
         if self.token_storage is not None:
-            serialized_tokens = self.token_storage.read()
-            tokens = self.token_storage.deserialize(serialized_tokens)
-
-            if not tokens:
-                raise LoadError('No Tokens loaded')
-
-            if requested_scopes not in [(), None]:
-                scopes = [tset['scope'].split() for tset in tokens.values()]
-                flat_list = [item for sublist in scopes for item in sublist]
-                if set(flat_list) != set(requested_scopes):
-                    raise ScopesMismatch('Requested Scopes do not match loaded'
-                                         ' Scopes for Globus Auth.')
-
-            expired = [
-                time.time() >= t["expires_at_seconds"]
-                for t in tokens.values()
-            ]
-            if any(expired):
-                raise TokensExpired()
-
-            return tokens
+                serialized_tokens = self.token_storage.read_tokens()
+                return self.token_storage.deserialize_tokens(serialized_tokens)
         raise LoadError('No token_storage set on app. (Try JSONTokenStorage)')
 
+    def load_tokens(self, requested_scopes=None):
+        tokens = self._load_raw_tokens()
+
+        if not tokens:
+            raise LoadError('No Tokens loaded')
+
+        check_scopes(tokens, requested_scopes)
+        check_expired(tokens)
+
+        return tokens
+
     def revoke_tokens(self):
+        """
+        Revoke saved tokens and clear them from storage
+        :return: True if saved tokens were revoked, false if tokens could not
+        be loaded
+        """
         try:
-            tokens = self.load_tokens()
-            for rs, tok_set in tokens.items():
-                self.oauth2_revoke_token(tok_set.get('access_token'))
-                self.oauth2_revoke_token(tok_set.get('refresh_token'))
-            self.token_storage.clear()
+            self.revoke_token_set(self._load_raw_tokens())
+            self.token_storage.clear_tokens()
             return True
         except LoadError:
             pass
         return False
+
+    def revoke_token_set(self, tokens):
+        for rs, tok_set in tokens.items():
+            self.oauth2_revoke_token(tok_set.get('access_token'))
+            self.oauth2_revoke_token(tok_set.get('refresh_token'))
