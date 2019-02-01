@@ -1,26 +1,13 @@
 from uuid import uuid4
 import pytest
 
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
-
 from native_login.client import NativeClient
 from native_login.token_storage.configparser_token_storage import (
     MultiClientTokenStorage
 )
 from native_login.local_server import LocalServerCodeHandler
-from native_login.code_handler import CodeHandler
+from native_login.code_handler import InputCodeHandler
 from native_login.exc import LoadError
-
-
-@pytest.fixture
-def mock_code_handler():
-    class MockCodeHandler(CodeHandler):
-        def get_code(self):
-            return 'mock_code'
-    return MockCodeHandler()
 
 
 @pytest.fixture
@@ -38,21 +25,24 @@ def mock_token_response(monkeypatch):
     return GlobusSDKTokenResponse()
 
 
-@pytest.fixture
-def mock_revoke(monkeypatch):
-    mock = Mock()
-    monkeypatch.setattr(NativeClient, 'oauth2_revoke_token', mock)
-    return mock
-
-
-def test_client_login(mock_code_handler, mock_token_response):
+def test_client_login(mock_input, mock_token_response):
     cli = NativeClient(client_id=str(uuid4()),
-                       secondary_code_handler=mock_code_handler)
+                       secondary_code_handler=InputCodeHandler())
     assert isinstance(cli.token_storage, MultiClientTokenStorage)
     assert isinstance(cli.local_server_code_handler, LocalServerCodeHandler)
 
     tokens = cli.login(no_local_server=True, no_browser=True)
+    assert mock_input.called
     assert tokens == mock_token_response.by_resource_server
+
+
+def test_custom_local_server_handler(mock_input, mock_webbrowser,
+                                     mock_token_response):
+    # Shows handlers are fungible and ANY code handler can be used
+    cli = NativeClient(client_id=str(uuid4()),
+                       local_server_code_handler=InputCodeHandler())
+    cli.login()
+    assert mock_input.called
 
 
 def test_revoke_login(mock_revoke, mock_tokens):
