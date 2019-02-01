@@ -11,13 +11,15 @@ from native_login.exc import LoadError
 class NativeClient(NativeAppAuthClient):
 
     def __init__(self, token_storage=MultiClientTokenStorage(),
-                 local_server_code_handler=None, *args, **kwargs):
+                 local_server_code_handler=LocalServerCodeHandler(),
+                 secondary_code_handler=InputCodeHandler(),
+                 *args, **kwargs):
         super(NativeClient, self).__init__(*args, **kwargs)
         self.token_storage = token_storage
         self.app_name = kwargs.get('app_name') or 'My App'
-        self.local_server = (local_server_code_handler or
-                             LocalServerCodeHandler())
-        self.local_server.set_app_name(self.app_name)
+        self.local_server_code_handler = local_server_code_handler
+        self.local_server_code_handler.set_app_name(self.app_name)
+        self.secondary_code_handler = secondary_code_handler
         if isinstance(self.token_storage, MultiClientTokenStorage):
             self.token_storage.set_client_id(kwargs.get('client_id'))
 
@@ -32,8 +34,8 @@ class NativeClient(NativeAppAuthClient):
                 pass
 
         grant_name = prefill_named_grant or '{} Login'.format(self.app_name)
-        code_handler = (InputCodeHandler()
-                        if no_local_server else self.local_server)
+        code_handler = (self.secondary_code_handler
+                        if no_local_server else self.local_server_code_handler)
 
         with code_handler.start():
             self.oauth2_start_flow(
@@ -55,6 +57,7 @@ class NativeClient(NativeAppAuthClient):
         if self.token_storage is not None:
             serialized_tokens = self.token_storage.serialize_tokens(tokens)
             return self.token_storage.write_tokens(serialized_tokens)
+        raise LoadError('No token_storage set on client.')
 
     def _load_raw_tokens(self):
         """
@@ -64,7 +67,7 @@ class NativeClient(NativeAppAuthClient):
         if self.token_storage is not None:
                 serialized_tokens = self.token_storage.read_tokens()
                 return self.token_storage.deserialize_tokens(serialized_tokens)
-        raise LoadError('No token_storage set on app. (Try JSONTokenStorage)')
+        raise LoadError('No token_storage set on client.')
 
     def load_tokens(self, requested_scopes=None):
         tokens = self._load_raw_tokens()
@@ -83,13 +86,8 @@ class NativeClient(NativeAppAuthClient):
         :return: True if saved tokens were revoked, false if tokens could not
         be loaded
         """
-        try:
-            self.revoke_token_set(self._load_raw_tokens())
-            self.token_storage.clear_tokens()
-            return True
-        except LoadError:
-            pass
-        return False
+        self.revoke_token_set(self._load_raw_tokens())
+        self.token_storage.clear_tokens()
 
     def revoke_token_set(self, tokens):
         for rs, tok_set in tokens.items():
