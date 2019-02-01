@@ -1,5 +1,5 @@
 import os
-from six.moves.configparser import ConfigParser, NoSectionError
+from six.moves.configparser import ConfigParser
 
 from native_login.token_storage.token_storage import TokenStorage
 from native_login.token_storage.storage_tools import flat_pack, flat_unpack

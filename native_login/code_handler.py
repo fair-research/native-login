@@ -2,12 +2,16 @@ import os
 import sys
 import webbrowser
 from contextlib import contextmanager
+import six
 
 
 class CodeHandler(object):
 
-    def __init__(self):
-        self.message = 'Please paste the following URL in a browser: \n{}'
+    def __init__(self, paste_url_in_browser_msg=None):
+        self.paste_url_in_browser_msg = (
+            paste_url_in_browser_msg or
+            'Please paste the following URL in a browser: \n{}'
+        )
 
     @contextmanager
     def start(self):
@@ -34,7 +38,7 @@ class CodeHandler(object):
         if no_browser is False and not self.is_remote_session():
             webbrowser.open(url, new=1)
         else:
-            self.write_message(self.message)
+            self.write_message(self.paste_url_in_browser_msg)
         try:
             return self.get_code()
         except KeyboardInterrupt:
@@ -62,4 +66,4 @@ class InputCodeHandler(CodeHandler):
 
     def get_code(self):
         self.write_message('Please Paste your Auth Code Below: ')
-        return input()
+        return six.moves.input()
