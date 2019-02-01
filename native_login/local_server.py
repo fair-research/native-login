@@ -1,11 +1,9 @@
 
-import logging
-import sys
 import threading
 from contextlib import contextmanager
 import string
 import six
-from six.moves import http_client, queue
+from six.moves import queue
 from six.moves.urllib.parse import parse_qsl, urlparse, urlunparse
 
 try:
@@ -94,7 +92,7 @@ class LocalServerCodeHandler(CodeHandler):
     @property
     def server(self):
         if self._server is None:
-            raise AttributeError('server referenced before start() called!')
+            raise LocalServerError('server referenced before start() called!')
         else:
             return self._server
 
@@ -119,16 +117,6 @@ class LocalServerCodeHandler(CodeHandler):
         return self.server.wait_for_code()
 
 
-def enable_requests_logging():
-    http_client.HTTPConnection.debuglevel = 4
-
-    logging.basicConfig()
-    logging.getLogger().setLevel(logging.DEBUG)
-    requests_log = logging.getLogger('requests.packages.urllib3')
-    requests_log.setLevel(logging.DEBUG)
-    requests_log.propagate = True
-
-
 class RedirectHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):  # noqa
@@ -140,7 +128,8 @@ class RedirectHandler(BaseHTTPRequestHandler):
         code = query_params.get('code')
         error = query_params.get('error_description',
                                  query_params.get('error'))
-        resp = self.server.success() if code else self.server.error(error)
+
+        resp = self.server.success() if code else self.server.error()
         self.wfile.write(resp)
         self.server.return_code(code or LocalServerError(error))
 
@@ -154,7 +143,8 @@ class RedirectHTTPServer(HTTPServer, object):
     DEFAULT_HANDLER = RedirectHandler
     VARS_KEYS = {'success', 'error'}
 
-    def __init__(self, template, vars, listen=None, handler_class=None):
+    def __init__(self, template, vars, listen=None, handler_class=None,
+                 timeout=3600):
         HTTPServer.__init__(
             self,
             listen or RedirectHTTPServer.DEFAULT_LISTEN,
@@ -163,6 +153,7 @@ class RedirectHTTPServer(HTTPServer, object):
         self._auth_code_queue = queue.Queue()
         self.template = template
         self.vars = vars
+        self.timeout = timeout
         if not self.VARS_KEYS.issubset(set(vars.keys())):
             raise ValueError('Vars must contain two dicts: {}'
                              ''.format(self.VARS_KEYS))
@@ -187,10 +178,6 @@ class RedirectHTTPServer(HTTPServer, object):
         tvars.update(self.vars[key])
         return six.b(self.template.substitute(tvars))
 
-    def handle_error(self, request, client_address):
-        exctype, excval, exctb = sys.exc_info()
-        self._auth_code_queue.put(excval)
-
     def return_code(self, code):
         self._auth_code_queue.put_nowait(code)
 
@@ -199,7 +186,7 @@ class RedirectHTTPServer(HTTPServer, object):
         # relevant Python issue discussing this behavior:
         # https://bugs.python.org/issue1360
         try:
-            return self._auth_code_queue.get(block=True, timeout=3600)
+            return self._auth_code_queue.get(block=True, timeout=self.timeout)
         except queue.Empty:
             raise LocalServerError()
         finally:
