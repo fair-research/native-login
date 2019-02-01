@@ -20,6 +20,10 @@ class CodeHandler(object):
     def get_redirect_uri(self):
         return None
 
+    def set_app_name(self, app_name):
+        """Optional method to override if an app uses """
+        pass
+
     def authenticate(self, url, no_browser=False):
         """
         Use the given url to direct the user to Globus Auth so they can login.
