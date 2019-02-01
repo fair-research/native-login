@@ -75,7 +75,8 @@ class NativeClient(NativeAppAuthClient):
         if not tokens:
             raise LoadError('No Tokens loaded')
 
-        check_scopes(tokens, requested_scopes)
+        if requested_scopes not in [None, ()]:
+            check_scopes(tokens, requested_scopes)
         check_expired(tokens)
 
         return tokens

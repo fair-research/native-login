@@ -58,14 +58,14 @@ def test_client_login(mock_code_handler, mock_token_response):
 def test_revoke_login(mock_revoke, mock_tokens):
     cli = NativeClient(client_id=str(uuid4()))
     cli.revoke_token_set(mock_tokens)
-    assert mock_revoke.call_count == 2
+    assert mock_revoke.call_count == 6
 
 
 def test_revoke_saved_tokens(mock_revoke, mock_tokens, mem_storage):
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     mem_storage.tokens = mock_tokens
     cli.revoke_tokens()
-    assert mock_revoke.call_count == 2
+    assert mock_revoke.call_count == 6
 
 
 def test_load_tokens(mem_storage, mock_tokens):

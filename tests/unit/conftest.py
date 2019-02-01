@@ -1,4 +1,5 @@
 import pytest
+from copy import deepcopy
 from .mocks import MemoryStorage, MOCK_TOKEN_SET
 
 
@@ -9,4 +10,4 @@ def mem_storage():
 
 @pytest.fixture
 def mock_tokens():
-    return MOCK_TOKEN_SET
+    return deepcopy(MOCK_TOKEN_SET)
