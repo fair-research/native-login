@@ -15,12 +15,17 @@ Install with pip:
 
 ### Getting Started
 
-First, you need to [register a client](http://developers.globus.org). Usage looks like
-this:
+You'll need a Client ID from Globus. Follow [these instructions](https://docs.globus.org/api/auth/developer-guide/#register-app)
+from the Globus Auth Developer Guide. Be sure to check the
+**Native App** box in the registration form. Note the Client ID assigned by Globus. 
+You'll need it in your code, as shown in the example below.
+
+Usage looks like this:
 
     from native_login.client import NativeClient
 
     tokens = NativeClient(client_id='<client_id>', app_name='My App').login()
+
 
 After that, it's off to scripting:
 
@@ -45,4 +50,3 @@ Run pytest:
 See coverage with a couple more arguments:
 
     pytest --cov=native_login tests/
-
