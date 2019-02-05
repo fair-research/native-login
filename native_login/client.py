@@ -74,7 +74,10 @@ class NativeClient(NativeAppAuthClient):
             auth_code = code_handler.authenticate(url=auth_url,
                                                   no_browser=no_browser)
         token_response = self.oauth2_exchange_code_for_tokens(auth_code)
-        self.save_tokens(token_response)
+        try:
+            self.save_tokens(token_response)
+        except LoadError:
+            pass
         return token_response.by_resource_server
 
     def save_tokens(self, tokens):
