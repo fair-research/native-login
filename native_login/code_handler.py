@@ -6,6 +6,11 @@ import six
 
 
 class CodeHandler(object):
+    """
+    Generic handler for the code returned by the Native App Auth Flow in
+    Globus Auth. It's intended to be subclassed to define the behavior for
+    how the code gets from Globus Auth to the Native App.
+    """
 
     def __init__(self, paste_url_in_browser_msg=None):
         self.paste_url_in_browser_msg = (
@@ -16,16 +21,29 @@ class CodeHandler(object):
     @contextmanager
     def start(self):
         """
-        Do any required setup, such as setting `self.redirect_uri`. Called
-        right before authenticate().
+        An extra method to do any extra startup before calling authenticate()
+        For local_sever, this is a time to start a thread for a local TCP
+        server for handling the auth code. For simple handlers like the
+        InputCodeHandler, this can be safely ignored.
         """
         yield
 
     def get_redirect_uri(self):
+        """
+        For use with code handlers that don't know their redirect_uri until
+        start() is called. For local_server, this is needed to find an open
+        port number to return something like http://localhost:<PORT>/
+        Return None to use the default Globus helper page
+        """
         return None
 
     def set_app_name(self, app_name):
-        """Optional method to override if an app uses """
+        """
+        Optional method for setting the app name, if this is useful to the
+        code handler. For local server, this is displayed on the local server's
+        page.
+        :param app_name: String to use for the app name.
+        """
         pass
 
     def authenticate(self, url, no_browser=False):
@@ -56,9 +74,18 @@ class CodeHandler(object):
         print(message)
 
     def get_code(self):
+        """
+        Override in child. Get the code returned by Globus Auth to complete
+        the Native App Auth Flow.
+        :return: Code returned by Globus Auth
+        """
         raise NotImplemented()
 
     def is_remote_session(self):
+        """
+        Check if this is being run from an ssh shell.
+        :return: True if ssh shell, false otherwise
+        """
         return os.environ.get('SSH_TTY', os.environ.get('SSH_CONNECTION'))
 
 
