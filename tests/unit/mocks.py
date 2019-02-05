@@ -1,5 +1,4 @@
 import time
-from native_login import TokenStorage
 
 DEFAULT_EXPIRE = int(time.time()) + 60 * 60 * 48
 
@@ -32,7 +31,7 @@ MOCK_TOKEN_SET = {
 }
 
 
-class MemoryStorage(TokenStorage):
+class MemoryStorage(object):
     def __init__(self):
         super(MemoryStorage, self).__init__()
         self.tokens = {}
