@@ -1,11 +1,13 @@
 """
 Typically, you want to save tokens after login. The simplest solution is
 to use the built in helpers. This is best for scripting. If you're writing
-a custom client and want more control over your config, see the 'custom config'
+a custom client and want more control over your config, see the complex config
 module.
 """
+from native_login import NativeClient
 
-from native_login import NativeClient, JSONTokenStorage
+# Supported built-in storage mechanisms
+from native_login import JSONTokenStorage, ConfigParserTokenStorage  # noqa
 
 app = NativeClient(
     # Registered client on http://developers.globus.org
@@ -13,10 +15,11 @@ app = NativeClient(
     token_storage=JSONTokenStorage('mytokens.json')
 )
 
-tokens = app.login()
+# Saves tokens
+app.login()
 
-# Show tokens
-print(tokens)
+# Loads tokens
+app.load_tokens()
 
-# Revoke tokens and clear them from the config file when finished
+# Clears tokens
 app.revoke_tokens()
