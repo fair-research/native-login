@@ -48,10 +48,10 @@ def test_revoke_login(mock_revoke, mock_tokens):
     assert mock_revoke.call_count == 6
 
 
-def test_revoke_saved_tokens(mock_revoke, mock_tokens, mem_storage):
+def test_logout(mock_revoke, mock_tokens, mem_storage):
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     mem_storage.tokens = mock_tokens
-    cli.revoke_tokens()
+    cli.logout()
     assert mock_revoke.call_count == 6
 
 
@@ -74,7 +74,7 @@ def test_client_token_calls_with_no_storage_raise_error(mock_tokens):
     with pytest.raises(LoadError):
         cli.save_tokens(mock_tokens)
     with pytest.raises(LoadError):
-        cli.revoke_tokens()
+        cli.logout()
 
 
 def test_custom_token_storage():

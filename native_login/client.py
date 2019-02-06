@@ -128,11 +128,9 @@ class NativeClient(NativeAppAuthClient):
 
         return tokens
 
-    def revoke_tokens(self):
+    def logout(self):
         """
         Revoke saved tokens and clear them from storage
-        :return: True if saved tokens were revoked, false if tokens could not
-        be loaded
         """
         self.revoke_token_set(self._load_raw_tokens())
         self.token_storage.clear_tokens()

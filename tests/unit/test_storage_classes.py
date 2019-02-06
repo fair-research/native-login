@@ -27,7 +27,7 @@ def test_json_token_storage(mock_token_response, mock_revoke, monkeypatch):
         assert tokens == MOCK_TOKEN_SET
         mock_remove = Mock()
         with patch('os.remove', mock_remove):
-            cli.revoke_tokens()
+            cli.logout()
             assert mock_remove.called
 
 
