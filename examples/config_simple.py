@@ -22,4 +22,4 @@ app.login()
 app.load_tokens()
 
 # Clears tokens
-app.revoke_tokens()
+app.logout()

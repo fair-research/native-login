@@ -66,4 +66,4 @@ app.login()
 app.load_tokens()
 
 # Calls clear_tokens()
-app.revoke_tokens()
+app.logout()
