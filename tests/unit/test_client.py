@@ -10,21 +10,6 @@ from native_login.code_handler import InputCodeHandler
 from native_login.exc import LoadError
 
 
-@pytest.fixture
-def mock_token_response(monkeypatch):
-    class GlobusSDKTokenResponse:
-        def __init__(self, *args, **kwargs):
-            pass
-
-        @property
-        def by_resource_server(self):
-            return {'my_resource_server': {}}
-
-    monkeypatch.setattr(NativeClient, 'oauth2_exchange_code_for_tokens',
-                        GlobusSDKTokenResponse)
-    return GlobusSDKTokenResponse()
-
-
 def test_client_login(mock_input, mock_token_response):
     cli = NativeClient(client_id=str(uuid4()),
                        secondary_code_handler=InputCodeHandler())

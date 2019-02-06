@@ -40,8 +40,8 @@ class ConfigParserTokenStorage(object):
 
     def clear_tokens(self):
         config = self.load()
-        config.add_section(self.section)
         config.remove_section(self.section)
+        config.add_section(self.section)
         self.save(config)
 
 
