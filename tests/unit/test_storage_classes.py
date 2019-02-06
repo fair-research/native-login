@@ -1,4 +1,5 @@
 import uuid
+import os
 
 try:
     from unittest.mock import Mock, mock_open, patch
@@ -10,12 +11,13 @@ from native_login import (ConfigParserTokenStorage, JSONTokenStorage,
 from .mocks import MOCK_TOKEN_SET, CONFIGPARSER_VALID_CFG
 
 
-def test_json_token_storage(mock_token_response, mock_revoke):
+def test_json_token_storage(mock_token_response, mock_revoke, monkeypatch):
     cli = NativeClient(client_id=str(uuid.uuid4()),
                        token_storage=JSONTokenStorage())
     # Mock actual call to open(). Catch the data 'written' and use it in the
     # load function. This is a cheap and easy (and hacky) way to test that the
     # stuff we get read was the same as the stuff written in.
+    monkeypatch.setattr(os.path, 'exists', lambda x: True)
     mo = mock_open()
     with patch('builtins.open', mo):
         cli.save_tokens(mock_token_response)
@@ -23,10 +25,10 @@ def test_json_token_storage(mock_token_response, mock_revoke):
     with patch('builtins.open', mock_open(read_data=written)):
         tokens = cli.load_tokens()
         assert tokens == MOCK_TOKEN_SET
-    mock_remove = Mock()
-    with patch('os.remove', mock_remove):
-        cli.revoke_tokens()
-        assert mock_remove.called
+        mock_remove = Mock()
+        with patch('os.remove', mock_remove):
+            cli.revoke_tokens()
+            assert mock_remove.called
 
 
 def test_json_token_storage_non_existant_filename():

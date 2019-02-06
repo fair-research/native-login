@@ -15,22 +15,29 @@ def test_version_sanity():
     assert isinstance(__version__, str)
 
 
-def test_client_login(mock_input, mock_token_response):
-    cli = NativeClient(client_id=str(uuid4()),
-                       secondary_code_handler=InputCodeHandler())
+def test_client_defaults():
+    cli = NativeClient(client_id=str(uuid4()))
     assert isinstance(cli.token_storage, MultiClientTokenStorage)
     assert isinstance(cli.local_server_code_handler, LocalServerCodeHandler)
 
-    tokens = cli.login(no_local_server=True, no_browser=True)
+
+def test_client_login(mock_input, mock_webbrowser, mock_token_response,
+                      mem_storage):
+    cli = NativeClient(client_id=str(uuid4()),
+                       local_server_code_handler=InputCodeHandler(),
+                       token_storage=mem_storage)
+
+    tokens = cli.login()
     assert mock_input.called
     assert tokens == mock_token_response.by_resource_server
 
 
 def test_custom_local_server_handler(mock_input, mock_webbrowser,
-                                     mock_token_response):
+                                     mock_token_response, mem_storage):
     # Shows handlers are fungible and ANY code handler can be used
     cli = NativeClient(client_id=str(uuid4()),
-                       local_server_code_handler=InputCodeHandler())
+                       local_server_code_handler=InputCodeHandler(),
+                       token_storage=mem_storage)
     cli.login()
     assert mock_input.called
 
