@@ -1,13 +1,18 @@
 import json
 import os
-from native_login.token_storage.token_storage import TokenStorage
 
 
-class JSONTokenStorage(TokenStorage):
+class JSONTokenStorage(object):
+    """
+    Stores tokens in json format on disk in the local directory by default.
+    """
+
+    def __init__(self, filename=None):
+        self.filename = filename or 'mytokens.json'
 
     def write_tokens(self, tokens):
         with open(self.filename, 'w+') as fh:
-            json.dump(tokens, fh, indent=2)
+            json.dump(tokens.by_resource_server, fh, indent=2)
 
     def read_tokens(self):
         if not os.path.exists(self.filename):

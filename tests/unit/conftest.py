@@ -40,3 +40,18 @@ def mock_revoke(monkeypatch):
     mock = Mock()
     monkeypatch.setattr(NativeClient, 'oauth2_revoke_token', mock)
     return mock
+
+
+@pytest.fixture
+def mock_token_response(monkeypatch, mock_tokens):
+    class GlobusSDKTokenResponse:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        @property
+        def by_resource_server(self):
+            return mock_tokens
+
+    monkeypatch.setattr(NativeClient, 'oauth2_exchange_code_for_tokens',
+                        GlobusSDKTokenResponse)
+    return GlobusSDKTokenResponse()

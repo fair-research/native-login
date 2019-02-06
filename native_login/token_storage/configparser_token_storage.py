@@ -1,57 +1,56 @@
 import os
 from six.moves.configparser import ConfigParser
 
-from native_login.token_storage.token_storage import TokenStorage
 from native_login.token_storage.storage_tools import flat_pack, flat_unpack
 
 
-class ConfigParserTokenStorage(TokenStorage):
-
-    CONFIG_TOKEN_GROUPS = "token_groups"
+class ConfigParserTokenStorage(object):
+    """
+    Basic ConfigParser object for both python 2 and 3. This object provides the
+    basics for token storage, and basic save/load functions for writing/reading
+    config data to disk.
+    """
+    DEFAULT_FILENAME = os.path.expanduser('~/.globus-native-apps.cfg')
+    CONFIG_TOKEN_GROUPS = 'token_groups'
     CFG_SECTION = 'tokens'
 
     def __init__(self, filename=None, section=None):
-        super(ConfigParserTokenStorage, self).__init__(filename=filename)
         self.section = section or self.CFG_SECTION
+        self.filename = filename or self.DEFAULT_FILENAME
 
-    def read_config_parser(self):
+    def load(self):
         config = ConfigParser()
         config.read(self.filename)
         if self.section not in config.sections():
             config.add_section(self.section)
         return config
 
-    def write_config_parser(self, config):
+    def save(self, config):
         with open(self.filename, 'w') as configfile:
             config.write(configfile)
 
     def write_tokens(self, tokens):
-        config = self.read_config_parser()
-        for name, value in tokens.items():
+        config = self.load()
+        for name, value in flat_pack(tokens.by_resource_server).items():
             config.set(self.section, name, value)
-        self.write_config_parser(config)
+        self.save(config)
 
     def read_tokens(self):
-        config = self.read_config_parser()
-        return dict(config.items(self.section))
+        return flat_unpack(dict(self.load().items(self.section)))
 
     def clear_tokens(self):
-        os.remove(self.filename)
-
-    def serialize_tokens(self, oauth2_token_response):
-        return flat_pack(oauth2_token_response.by_resource_server)
-
-    def deserialize_tokens(self, packed_tokens):
-        return flat_unpack(packed_tokens)
+        config = self.load()
+        config.remove_section(self.section)
+        config.add_section(self.section)
+        self.save(config)
 
 
 class MultiClientTokenStorage(ConfigParserTokenStorage):
+    """
+    A very specific implementation for NativeClient, and serves as a nice
+    default for saving tokens for multiple Globus Apps, storing each app's
+    tokens in a separate section by client_id.
+    """
 
     def set_client_id(self, client_id):
         self.section = client_id
-
-    def clear(self):
-        config = self.read_config_parser()
-        if self.section in config.sections():
-            config.remove_section(self.section)
-            self.write_config_parser(config)

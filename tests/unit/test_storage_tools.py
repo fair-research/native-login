@@ -31,3 +31,7 @@ def test_check_scopes_with_differing_scopes(mock_tokens):
 def test_flat_pack_unpack(mock_tokens):
     exercised_tokens = flat_unpack(flat_pack(mock_tokens))
     assert exercised_tokens == mock_tokens
+
+
+def test_flat_unpack_with_empty_value():
+    assert flat_unpack({}) == {}

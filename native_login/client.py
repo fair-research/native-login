@@ -17,12 +17,16 @@ class NativeClient(NativeAppAuthClient):
     and tailor them to its own needs.
     """
 
+    TOKEN_STORAGE_ATTRS = {'write_tokens', 'read_tokens', 'clear_tokens'}
+
     def __init__(self, token_storage=MultiClientTokenStorage(),
                  local_server_code_handler=LocalServerCodeHandler(),
                  secondary_code_handler=InputCodeHandler(),
                  *args, **kwargs):
         super(NativeClient, self).__init__(*args, **kwargs)
         self.token_storage = token_storage
+        if token_storage is not None:
+            self.verify_token_storage(self.token_storage)
         self.app_name = kwargs.get('app_name') or 'My App'
         self.local_server_code_handler = local_server_code_handler
         self.local_server_code_handler.set_app_name(self.app_name)
@@ -80,6 +84,12 @@ class NativeClient(NativeAppAuthClient):
             pass
         return token_response.by_resource_server
 
+    def verify_token_storage(self, obj):
+        for attr in self.TOKEN_STORAGE_ATTRS:
+            if getattr(obj, attr, None) is None:
+                raise AttributeError('token_storage requires object "{}" to '
+                                     'have the {} attribute'.format(obj, attr))
+
     def save_tokens(self, tokens):
         """
         Save tokens if token_storage is set. Typically this is called
@@ -88,8 +98,7 @@ class NativeClient(NativeAppAuthClient):
         :return: None
         """
         if self.token_storage is not None:
-            serialized_tokens = self.token_storage.serialize_tokens(tokens)
-            return self.token_storage.write_tokens(serialized_tokens)
+            return self.token_storage.write_tokens(tokens)
         raise LoadError('No token_storage set on client.')
 
     def _load_raw_tokens(self):
@@ -98,8 +107,7 @@ class NativeClient(NativeAppAuthClient):
         :return: tokens by resource server, or an exception if that fails
         """
         if self.token_storage is not None:
-                serialized_tokens = self.token_storage.read_tokens()
-                return self.token_storage.deserialize_tokens(serialized_tokens)
+                return self.token_storage.read_tokens()
         raise LoadError('No token_storage set on client.')
 
     def load_tokens(self, requested_scopes=None):

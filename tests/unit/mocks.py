@@ -1,5 +1,8 @@
 import time
-from native_login import TokenStorage
+import os
+
+DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
+CONFIGPARSER_VALID_CFG = os.path.join(DATA_PATH, 'configparser_valid.cfg')
 
 DEFAULT_EXPIRE = int(time.time()) + 60 * 60 * 48
 
@@ -32,7 +35,7 @@ MOCK_TOKEN_SET = {
 }
 
 
-class MemoryStorage(TokenStorage):
+class MemoryStorage(object):
     def __init__(self):
         super(MemoryStorage, self).__init__()
         self.tokens = {}
