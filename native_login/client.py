@@ -63,7 +63,6 @@ class NativeClient(NativeAppAuthClient):
                 return self.load_tokens(requested_scopes=requested_scopes)
             except (LoadError, Exception):
                 pass
-                # raise
 
         grant_name = prefill_named_grant or '{} Login'.format(self.app_name)
         code_handler = (self.secondary_code_handler

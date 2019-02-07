@@ -1,5 +1,8 @@
 import uuid
 import os
+import sys
+
+import pytest
 
 try:
     from unittest.mock import Mock, mock_open, patch
@@ -10,6 +13,11 @@ from native_login import (ConfigParserTokenStorage, JSONTokenStorage,
                           NativeClient)
 from .mocks import MOCK_TOKEN_SET, CONFIGPARSER_VALID_CFG
 
+if sys.version_info.major == 3:
+    BUILTIN_OPEN = 'builtins.open'
+else:
+    BUILTIN_OPEN = '__builtin__.open'
+
 
 def test_json_token_storage(mock_tokens, mock_revoke, monkeypatch):
     cli = NativeClient(client_id=str(uuid.uuid4()),
@@ -19,10 +27,10 @@ def test_json_token_storage(mock_tokens, mock_revoke, monkeypatch):
     # stuff we get read was the same as the stuff written in.
     monkeypatch.setattr(os.path, 'exists', lambda x: True)
     mo = mock_open()
-    with patch('builtins.open', mo):
+    with patch(BUILTIN_OPEN, mo):
         cli.save_tokens(mock_tokens)
         written = ''.join([c[1][0] for c in mo().write.mock_calls])
-    with patch('builtins.open', mock_open(read_data=written)):
+    with patch(BUILTIN_OPEN, mock_open(read_data=written)):
         tokens = cli.load_tokens()
         assert tokens == MOCK_TOKEN_SET
         mock_remove = Mock()
@@ -44,6 +52,8 @@ def test_config_parser_read_token_storage(mock_token_response):
     assert len(tokens['resource.server.org'].values()) == 6
 
 
+@pytest.mark.skipif(sys.version_info < (3, 0),
+                    reason='Python 2 builtin changed, patching won\'t work')
 def test_config_parser_write_token_storage(mock_tokens):
     cfg = ConfigParserTokenStorage(filename=CONFIGPARSER_VALID_CFG)
     mo = mock_open()
