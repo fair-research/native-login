@@ -23,6 +23,7 @@ class NativeClient(NativeAppAuthClient):
     def __init__(self, token_storage=MultiClientTokenStorage(),
                  local_server_code_handler=LocalServerCodeHandler(),
                  secondary_code_handler=InputCodeHandler(),
+                 default_scopes=None,
                  *args, **kwargs):
         super(NativeClient, self).__init__(*args, **kwargs)
         self.token_storage = token_storage
@@ -34,6 +35,7 @@ class NativeClient(NativeAppAuthClient):
         self.secondary_code_handler = secondary_code_handler
         if isinstance(self.token_storage, MultiClientTokenStorage):
             self.token_storage.set_client_id(kwargs.get('client_id'))
+        self.default_scopes = default_scopes
 
     def login(self, no_local_server=False, no_browser=False,
               requested_scopes=(), refresh_tokens=None,
@@ -69,7 +71,7 @@ class NativeClient(NativeAppAuthClient):
 
         with code_handler.start():
             self.oauth2_start_flow(
-                requested_scopes=requested_scopes,
+                requested_scopes=requested_scopes or self.default_scopes,
                 refresh_tokens=refresh_tokens,
                 prefill_named_grant=grant_name,
                 redirect_uri=code_handler.get_redirect_uri()
