@@ -2,7 +2,7 @@ import pytest
 import webbrowser
 from copy import deepcopy
 from .mocks import MemoryStorage, MOCK_TOKEN_SET
-from native_login import NativeClient
+from native_login import NativeClient, client
 import six
 
 try:
@@ -19,6 +19,27 @@ def mem_storage():
 @pytest.fixture
 def mock_tokens():
     return deepcopy(MOCK_TOKEN_SET)
+
+
+@pytest.fixture
+def mock_expired_tokens(mock_tokens):
+    for tset in mock_tokens.values():
+        tset['expires_at_seconds'] = 0
+    return mock_tokens
+
+
+@pytest.fixture
+def expired_tokens_with_refresh(mock_expired_tokens):
+    for tset in mock_expired_tokens.values():
+        tset['refresh_token'] = '<Mock Refresh Token>'
+    return mock_expired_tokens
+
+
+@pytest.fixture
+def mock_refresh_token_authorizer(monkeypatch):
+    monkeypatch.setattr(client,
+                        'RefreshTokenAuthorizer',
+                        Mock())
 
 
 @pytest.fixture

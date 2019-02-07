@@ -11,7 +11,7 @@ from native_login import (ConfigParserTokenStorage, JSONTokenStorage,
 from .mocks import MOCK_TOKEN_SET, CONFIGPARSER_VALID_CFG
 
 
-def test_json_token_storage(mock_token_response, mock_revoke, monkeypatch):
+def test_json_token_storage(mock_tokens, mock_revoke, monkeypatch):
     cli = NativeClient(client_id=str(uuid.uuid4()),
                        token_storage=JSONTokenStorage())
     # Mock actual call to open(). Catch the data 'written' and use it in the
@@ -20,7 +20,7 @@ def test_json_token_storage(mock_token_response, mock_revoke, monkeypatch):
     monkeypatch.setattr(os.path, 'exists', lambda x: True)
     mo = mock_open()
     with patch('builtins.open', mo):
-        cli.save_tokens(mock_token_response)
+        cli.save_tokens(mock_tokens)
         written = ''.join([c[1][0] for c in mo().write.mock_calls])
     with patch('builtins.open', mock_open(read_data=written)):
         tokens = cli.load_tokens()
@@ -44,14 +44,14 @@ def test_config_parser_read_token_storage(mock_token_response):
     assert len(tokens['resource.server.org'].values()) == 6
 
 
-def test_config_parser_write_token_storage(mock_token_response):
+def test_config_parser_write_token_storage(mock_tokens):
     cfg = ConfigParserTokenStorage(filename=CONFIGPARSER_VALID_CFG)
     mo = mock_open()
     with patch('builtins.open', mo):
-        cfg.write_tokens(mock_token_response)
+        cfg.write_tokens(mock_tokens)
         written = ''.join([c[1][0] for c in mo().write.mock_calls])
 
-    token_data = mock_token_response.by_resource_server['resource.server.org']
+    token_data = mock_tokens['resource.server.org']
     del token_data['refresh_token']
     for val in token_data.values():
         assert str(val) in written

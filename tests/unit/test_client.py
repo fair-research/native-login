@@ -7,8 +7,10 @@ from native_login.token_storage.configparser_token_storage import (
 )
 from native_login.local_server import LocalServerCodeHandler
 from native_login.code_handler import InputCodeHandler
-from native_login.exc import LoadError, ScopesMismatch
+from native_login.exc import LoadError, ScopesMismatch, TokensExpired
 from native_login.version import __version__
+
+from .mocks import Mock
 
 
 def test_version_sanity():
@@ -126,3 +128,34 @@ def test_client_load_errors_silenced_on_login(
                        token_storage=None)
     tokens = cli.login()
     assert tokens == mock_token_response.by_resource_server
+
+
+def test_client_token_refresh_without_tokens_raises(mock_tokens):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=None)
+    with pytest.raises(TokensExpired):
+        cli.refresh_tokens(mock_tokens)
+
+
+def test_client_token_refresh_with_tokens(expired_tokens_with_refresh,
+                                          mock_refresh_token_authorizer):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=None)
+    tokens = cli.refresh_tokens(expired_tokens_with_refresh)
+    for tset in tokens.values():
+        assert isinstance(tset['access_token'], Mock)
+
+
+def test_client_load_auto_refresh(expired_tokens_with_refresh, mem_storage,
+                                  mock_refresh_token_authorizer):
+    mem_storage.tokens = expired_tokens_with_refresh
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    tokens = cli.load_tokens()
+    for tset in tokens.values():
+        assert isinstance(tset['access_token'], Mock)
+
+
+def test_client_when_cannot_refresh(mock_expired_tokens, mem_storage,
+                                    mock_refresh_token_authorizer):
+    mem_storage.tokens = mock_expired_tokens
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    with pytest.raises(TokensExpired):
+        cli.load_tokens()

@@ -1,6 +1,11 @@
 import time
 import os
 
+try:
+    from unittest.mock import Mock
+except ImportError:
+    from mock import Mock
+
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 CONFIGPARSER_VALID_CFG = os.path.join(DATA_PATH, 'configparser_valid.cfg')
 

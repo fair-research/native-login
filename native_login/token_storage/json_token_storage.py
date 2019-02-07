@@ -12,7 +12,7 @@ class JSONTokenStorage(object):
 
     def write_tokens(self, tokens):
         with open(self.filename, 'w+') as fh:
-            json.dump(tokens.by_resource_server, fh, indent=2)
+            json.dump(tokens, fh, indent=2)
 
     def read_tokens(self):
         if not os.path.exists(self.filename):
