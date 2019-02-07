@@ -5,11 +5,11 @@ from native_login.exc import TokensExpired, ScopesMismatch
 
 def check_expired(tokens):
     expired = [
-        time.time() >= t['expires_at_seconds']
-        for t in tokens.values()
+        rs for rs, tset in tokens.items()
+        if time.time() >= tset['expires_at_seconds']
     ]
-    if any(expired):
-        raise TokensExpired()
+    if expired:
+        raise TokensExpired(resource_servers=expired)
 
 
 def check_scopes(tokens, requested_scopes):

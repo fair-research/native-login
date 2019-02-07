@@ -1,5 +1,4 @@
 import pytest
-import time
 
 from native_login.token_storage import (
     check_expired, check_scopes, flat_pack, flat_unpack
@@ -11,10 +10,20 @@ def test_check_expired_with_valid_tokens(mock_tokens):
     assert check_expired(mock_tokens) is None
 
 
-def test_check_expired(mock_tokens):
-    mock_tokens['resource.server.org']['expires_at_seconds'] = time.time() - 1
+def test_check_expired(mock_expired_tokens):
     with pytest.raises(TokensExpired):
-        check_expired(mock_tokens)
+        check_expired(mock_expired_tokens)
+
+
+def test_expired_contains_useful_info(mock_expired_tokens):
+    exc = None
+    try:
+        check_expired(mock_expired_tokens)
+    except TokensExpired as te:
+        exc = te
+    assert exc
+    for token in mock_expired_tokens:
+        assert token in str(exc)
 
 
 def test_check_scopes_with_valid_scopes(mock_tokens):

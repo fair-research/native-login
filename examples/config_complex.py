@@ -15,8 +15,22 @@ class MyTokenStorage(object):
 
     def write_tokens(self, tokens):
         """
-        Write tokens to disk. `tokens` is a Globus SDK object:
-        globus_sdk.auth.token_response.OAuthTokenResponse
+        Write tokens to disk. 'tokens' above will be in this format:
+        {
+            'auth.globus.org': {
+                'scope': 'openid profile email',
+                'access_token': '<token>',
+                'refresh_token': None,
+                'token_type': 'Bearer',
+                'expires_at_seconds': DEFAULT_EXPIRE,
+                'resource_server': 'auth.globus.org'
+            },
+            <More Token Dicts>
+        }
+        Some configs, like ConfigParser on python 2.7, do not allow nested
+        sections. In that case you can use these tools:
+
+        from native_client.token_storage import flat_pack, flat_unpack
         """
         with open(self.FILENAME, 'w+') as fh:
             json.dump(tokens.by_resource_server, fh, indent=2)

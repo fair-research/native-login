@@ -23,4 +23,12 @@ class TokensExpired(LoadError):
     """
     Tokens have expired
     """
-    pass
+    def __init__(self, *args, resource_servers=(), **kwargs):
+        super(TokensExpired, self).__init__(*args, **kwargs)
+        self.resource_servers = resource_servers
+
+    def __str__(self):
+        return '{} {}'.format(
+            super(TokensExpired, self).__str__(),
+            ', '.join(self.resource_servers)
+        )

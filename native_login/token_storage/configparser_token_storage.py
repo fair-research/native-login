@@ -31,7 +31,7 @@ class ConfigParserTokenStorage(object):
 
     def write_tokens(self, tokens):
         config = self.load()
-        for name, value in flat_pack(tokens.by_resource_server).items():
+        for name, value in flat_pack(tokens).items():
             config.set(self.section, name, value)
         self.save(config)
 

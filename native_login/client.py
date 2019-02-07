@@ -1,11 +1,12 @@
-from globus_sdk import NativeAppAuthClient
+from globus_sdk import (NativeAppAuthClient, RefreshTokenAuthorizer,
+                        AccessTokenAuthorizer)
 
 from native_login.code_handler import InputCodeHandler
 from native_login.local_server import LocalServerCodeHandler
 from native_login.token_storage import (
     MultiClientTokenStorage, check_expired, check_scopes
 )
-from native_login.exc import LoadError
+from native_login.exc import LoadError, TokensExpired
 
 
 class NativeClient(NativeAppAuthClient):
@@ -60,6 +61,7 @@ class NativeClient(NativeAppAuthClient):
                 return self.load_tokens(requested_scopes=requested_scopes)
             except (LoadError, Exception):
                 pass
+                # raise
 
         grant_name = prefill_named_grant or '{} Login'.format(self.app_name)
         code_handler = (self.secondary_code_handler
@@ -79,7 +81,7 @@ class NativeClient(NativeAppAuthClient):
                                                   no_browser=no_browser)
         token_response = self.oauth2_exchange_code_for_tokens(auth_code)
         try:
-            self.save_tokens(token_response)
+            self.save_tokens(token_response.by_resource_server)
         except LoadError:
             pass
         return token_response.by_resource_server
@@ -124,9 +126,57 @@ class NativeClient(NativeAppAuthClient):
 
         if requested_scopes not in [None, ()]:
             check_scopes(tokens, requested_scopes)
-        check_expired(tokens)
-
+        try:
+            check_expired(tokens)
+        except TokensExpired as te:
+            expired = {rs: tokens[rs] for rs in te.resource_servers}
+            if not self._refreshable(expired):
+                raise
+            tokens.update(self.refresh_tokens(expired))
+            self.save_tokens(tokens)
         return tokens
+
+    def _refreshable(self, tokens):
+        return all([bool(ts['refresh_token']) for ts in tokens.values()])
+
+    def refresh_tokens(self, tokens):
+        if not self._refreshable(tokens):
+            raise TokensExpired('No Refresh Token, cannot refresh tokens: ',
+                                resource_servers=tokens.keys())
+
+        for rs, token_dict in tokens.items():
+            authorizer = RefreshTokenAuthorizer(
+                token_dict['refresh_token'],
+                self,
+                access_token=token_dict['access_token'],
+                expires_at=token_dict['expires_at_seconds'],
+            )
+            authorizer.check_expiration_time()
+            token_dict['access_token'] = authorizer.access_token
+            token_dict['expires_at_seconds'] = authorizer.expires_at
+        return tokens
+
+    def get_authorizers(self):
+        authorizers = {}
+        for resource_server, token_dict in self.load_tokens().items():
+            if token_dict.get('refresh_token') is not None:
+                authorizers[resource_server] = RefreshTokenAuthorizer(
+                    token_dict['refresh_token'],
+                    self,
+                    access_token=token_dict['access_token'],
+                    expires_at=token_dict['expires_at_seconds'],
+                    on_refresh=self.on_refresh,
+                )
+            else:
+                authorizers[resource_server] = AccessTokenAuthorizer(
+                    token_dict['access_token']
+                )
+        return authorizers
+
+    def on_refresh(self, token_response):
+        loaded_tokens = self._load_raw_tokens()
+        loaded_tokens.update(token_response.by_resource_server)
+        self.save_tokens(loaded_tokens)
 
     def logout(self):
         """
