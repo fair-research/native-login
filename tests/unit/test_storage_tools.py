@@ -1,5 +1,4 @@
 import pytest
-import time
 
 from native_login.token_storage import (
     check_expired, check_scopes, flat_pack, flat_unpack

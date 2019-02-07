@@ -1,4 +1,5 @@
-from globus_sdk import NativeAppAuthClient, RefreshTokenAuthorizer
+from globus_sdk import (NativeAppAuthClient, RefreshTokenAuthorizer,
+                        AccessTokenAuthorizer)
 
 from native_login.code_handler import InputCodeHandler
 from native_login.local_server import LocalServerCodeHandler
@@ -80,7 +81,7 @@ class NativeClient(NativeAppAuthClient):
                                                   no_browser=no_browser)
         token_response = self.oauth2_exchange_code_for_tokens(auth_code)
         try:
-            self.save_tokens(token_response)
+            self.save_tokens(token_response.by_resource_server)
         except LoadError:
             pass
         return token_response.by_resource_server
@@ -154,6 +155,28 @@ class NativeClient(NativeAppAuthClient):
             token_dict['access_token'] = authorizer.access_token
             token_dict['expires_at_seconds'] = authorizer.expires_at
         return tokens
+
+    def get_authorizers(self):
+        authorizers = {}
+        for resource_server, token_dict in self.load_tokens().items():
+            if token_dict.get('refresh_token') is not None:
+                authorizers[resource_server] = RefreshTokenAuthorizer(
+                    token_dict['refresh_token'],
+                    self,
+                    access_token=token_dict['access_token'],
+                    expires_at=token_dict['expires_at_seconds'],
+                    on_refresh=self.on_refresh,
+                )
+            else:
+                authorizers[resource_server] = AccessTokenAuthorizer(
+                    token_dict['access_token']
+                )
+        return authorizers
+
+    def on_refresh(self, token_response):
+        loaded_tokens = self._load_raw_tokens()
+        loaded_tokens.update(token_response.by_resource_server)
+        self.save_tokens(loaded_tokens)
 
     def logout(self):
         """
