@@ -15,7 +15,7 @@ class CodeHandler(object):
     def __init__(self, paste_url_in_browser_msg=None):
         self.paste_url_in_browser_msg = (
             paste_url_in_browser_msg or
-            'Please paste the following URL in a browser: \n{}'
+            'Please paste the following URL in a browser'
         )
 
     @contextmanager
@@ -56,7 +56,8 @@ class CodeHandler(object):
         if no_browser is False and not self.is_remote_session():
             webbrowser.open(url, new=1)
         else:
-            self.write_message(self.paste_url_in_browser_msg)
+            self.write_message('{}:\n{}'.format(self.paste_url_in_browser_msg,
+                                                url))
         try:
             return self.get_code()
         except KeyboardInterrupt:
