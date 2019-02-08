@@ -9,7 +9,7 @@ from native_login.token_storage import (
 from native_login.exc import LoadError, TokensExpired
 
 
-class NativeClient(NativeAppAuthClient):
+class NativeClient(object):
     """
     The Native Client serves as another small layer on top of the Globus SDK
     to automatically handle token storage and provide a customizable
@@ -25,7 +25,7 @@ class NativeClient(NativeAppAuthClient):
                  secondary_code_handler=InputCodeHandler(),
                  default_scopes=None,
                  *args, **kwargs):
-        super(NativeClient, self).__init__(*args, **kwargs)
+        self.client = NativeAppAuthClient(*args, **kwargs)
         self.token_storage = token_storage
         if token_storage is not None:
             self.verify_token_storage(self.token_storage)
@@ -69,18 +69,18 @@ class NativeClient(NativeAppAuthClient):
                         if no_local_server else self.local_server_code_handler)
 
         with code_handler.start():
-            self.oauth2_start_flow(
+            self.client.oauth2_start_flow(
                 requested_scopes=requested_scopes or self.default_scopes,
                 refresh_tokens=refresh_tokens,
                 prefill_named_grant=grant_name,
                 redirect_uri=code_handler.get_redirect_uri()
             )
-            auth_url = self.oauth2_get_authorize_url(
+            auth_url = self.client.oauth2_get_authorize_url(
                 additional_params=additional_params
             )
             auth_code = code_handler.authenticate(url=auth_url,
                                                   no_browser=no_browser)
-        token_response = self.oauth2_exchange_code_for_tokens(auth_code)
+        token_response = self.client.oauth2_exchange_code_for_tokens(auth_code)
         try:
             self.save_tokens(token_response.by_resource_server)
         except LoadError:
@@ -188,5 +188,5 @@ class NativeClient(NativeAppAuthClient):
 
     def revoke_token_set(self, tokens):
         for rs, tok_set in tokens.items():
-            self.oauth2_revoke_token(tok_set.get('access_token'))
-            self.oauth2_revoke_token(tok_set.get('refresh_token'))
+            self.client.oauth2_revoke_token(tok_set.get('access_token'))
+            self.client.oauth2_revoke_token(tok_set.get('refresh_token'))

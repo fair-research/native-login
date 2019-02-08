@@ -3,7 +3,6 @@ import webbrowser
 import time
 from copy import deepcopy
 from .mocks import MemoryStorage, MOCK_TOKEN_SET
-from native_login import NativeClient
 import six
 
 import globus_sdk
@@ -72,7 +71,8 @@ def mock_webbrowser(monkeypatch):
 @pytest.fixture
 def mock_revoke(monkeypatch):
     mock = Mock()
-    monkeypatch.setattr(NativeClient, 'oauth2_revoke_token', mock)
+    monkeypatch.setattr(globus_sdk.NativeAppAuthClient,
+                        'oauth2_revoke_token', mock)
     return mock
 
 
@@ -86,6 +86,7 @@ def mock_token_response(monkeypatch, mock_tokens):
         def by_resource_server(self):
             return self.tokens
 
-    monkeypatch.setattr(NativeClient, 'oauth2_exchange_code_for_tokens',
+    monkeypatch.setattr(globus_sdk.NativeAppAuthClient,
+                        'oauth2_exchange_code_for_tokens',
                         GlobusSDKTokenResponse)
     return GlobusSDKTokenResponse()
