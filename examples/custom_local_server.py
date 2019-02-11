@@ -1,4 +1,4 @@
-from native_login import NativeClient, LocalServerCodeHandler
+from fair_research_login import NativeClient, LocalServerCodeHandler
 
 template = """
 <h1>Hello $app_name!</h1>

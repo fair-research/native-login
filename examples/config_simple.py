@@ -4,10 +4,10 @@ to use the built in helpers. This is best for scripting. If you're writing
 a custom client and want more control over your config, see the complex config
 module.
 """
-from native_login import NativeClient
+from fair_research_login import NativeClient
 
 # Supported built-in storage mechanisms
-from native_login import JSONTokenStorage, ConfigParserTokenStorage  # noqa
+from fair_research_login import JSONTokenStorage, ConfigParserTokenStorage  # noqa
 
 app = NativeClient(
     # Registered client on http://developers.globus.org

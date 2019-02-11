@@ -1,9 +1,9 @@
 import pytest
 
-from native_login.token_storage import (
+from fair_research_login.token_storage import (
     check_expired, check_scopes, flat_pack, flat_unpack
 )
-from native_login.exc import TokensExpired, ScopesMismatch
+from fair_research_login.exc import TokensExpired, ScopesMismatch
 
 
 def test_check_expired_with_valid_tokens(mock_tokens):

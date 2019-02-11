@@ -16,7 +16,8 @@ their own scripts by calling into your tool, you can import it instead
 
 from argparse import ArgumentParser
 from globus_sdk import AuthClient
-from native_login import NativeClient, ConfigParserTokenStorage, LoadError
+from fair_research_login import (NativeClient, ConfigParserTokenStorage,
+                                 LoadError)
 
 parser = ArgumentParser(prog='Example Client')
 subparsers = parser.add_subparsers(dest='subcommand')

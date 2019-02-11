@@ -1,12 +1,12 @@
 from globus_sdk import (NativeAppAuthClient, RefreshTokenAuthorizer,
                         AccessTokenAuthorizer)
 
-from native_login.code_handler import InputCodeHandler
-from native_login.local_server import LocalServerCodeHandler
-from native_login.token_storage import (
+from fair_research_login.code_handler import InputCodeHandler
+from fair_research_login.local_server import LocalServerCodeHandler
+from fair_research_login.token_storage import (
     MultiClientTokenStorage, check_expired, check_scopes
 )
-from native_login.exc import LoadError, TokensExpired
+from fair_research_login.exc import LoadError, TokensExpired
 
 
 class NativeClient(object):
@@ -110,7 +110,7 @@ class NativeClient(object):
         :return: tokens by resource server, or an exception if that fails
         """
         if self.token_storage is not None:
-                return self.token_storage.read_tokens()
+            return self.token_storage.read_tokens()
         raise LoadError('No token_storage set on client.')
 
     def load_tokens(self, requested_scopes=None):

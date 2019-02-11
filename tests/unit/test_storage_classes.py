@@ -9,8 +9,8 @@ try:
 except ImportError:
     from mock import Mock, mock_open, patch
 
-from native_login import (ConfigParserTokenStorage, JSONTokenStorage,
-                          NativeClient)
+from fair_research_login import (ConfigParserTokenStorage, JSONTokenStorage,
+                                 NativeClient)
 from .mocks import MOCK_TOKEN_SET, CONFIGPARSER_VALID_CFG
 
 if sys.version_info.major == 3:

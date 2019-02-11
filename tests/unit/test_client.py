@@ -2,14 +2,14 @@ from uuid import uuid4
 import pytest
 from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer
 
-from native_login.client import NativeClient
-from native_login.token_storage.configparser_token_storage import (
+from fair_research_login.client import NativeClient
+from fair_research_login.token_storage.configparser_token_storage import (
     MultiClientTokenStorage
 )
-from native_login.local_server import LocalServerCodeHandler
-from native_login.code_handler import InputCodeHandler
-from native_login.exc import LoadError, ScopesMismatch, TokensExpired
-from native_login.version import __version__
+from fair_research_login.local_server import LocalServerCodeHandler
+from fair_research_login.code_handler import InputCodeHandler
+from fair_research_login.exc import LoadError, ScopesMismatch, TokensExpired
+from fair_research_login.version import __version__
 
 
 def test_version_sanity():

@@ -1,6 +1,6 @@
 import time
 
-from native_login.exc import TokensExpired, ScopesMismatch
+from fair_research_login.exc import TokensExpired, ScopesMismatch
 
 
 def check_expired(tokens):

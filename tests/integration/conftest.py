@@ -1,5 +1,5 @@
 import pytest
-from native_login import NativeClient, ConfigParserTokenStorage
+from fair_research_login import NativeClient, ConfigParserTokenStorage
 
 
 @pytest.fixture

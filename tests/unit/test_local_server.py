@@ -4,8 +4,8 @@ import requests
 import pytest
 from six.moves.urllib.parse import urlencode
 
-from native_login.local_server import LocalServerCodeHandler
-from native_login.exc import LocalServerError
+from fair_research_login.local_server import LocalServerCodeHandler
+from fair_research_login.exc import LocalServerError
 
 
 class LocalServerTester:
