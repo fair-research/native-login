@@ -1,4 +1,4 @@
-# Native Login
+# Fair Research Login
 
 This package makes writing Globus scripts and clients a breeze! Easily setup
 token management and local server login with a few lines of code. Easily extend
@@ -10,7 +10,7 @@ The only requirements are the Globus SDK. Nothing else is required.
 
 Install with pip:
 
-    pip install -e git+https://github.com/fair-research/native-login#egg=native-login
+    pip install fair-research-login
 
 
 ### Getting Started
@@ -22,7 +22,7 @@ You'll need it in your code, as shown in the example below.
 
 Usage looks like this:
 
-    from native_login.client import NativeClient
+    from fair_research_login.client import NativeClient
 
     cli = NativeClient(client_id='<client_id>', app_name='My App')
     cli.login(refresh_tokens=True)
@@ -49,4 +49,4 @@ Run pytest:
 
 See coverage with a couple more arguments:
 
-    pytest --cov=native_login tests/
+    pytest --cov=fair_research_login tests/
