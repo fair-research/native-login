@@ -148,7 +148,7 @@ class NativeClient(object):
         for rs, token_dict in tokens.items():
             authorizer = RefreshTokenAuthorizer(
                 token_dict['refresh_token'],
-                self,
+                self.client,
                 access_token=token_dict['access_token'],
                 expires_at=token_dict['expires_at_seconds'],
             )
@@ -163,7 +163,7 @@ class NativeClient(object):
             if token_dict.get('refresh_token') is not None:
                 authorizers[resource_server] = RefreshTokenAuthorizer(
                     token_dict['refresh_token'],
-                    self,
+                    self.client,
                     access_token=token_dict['access_token'],
                     expires_at=token_dict['expires_at_seconds'],
                     on_refresh=self.on_refresh,
