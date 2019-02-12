@@ -11,8 +11,8 @@ try:
 except ImportError:
     from http.server import HTTPServer, BaseHTTPRequestHandler
 
-from native_login.exc import LocalServerError
-from native_login.code_handler import CodeHandler
+from fair_research_login.exc import LocalServerError
+from fair_research_login.code_handler import CodeHandler
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>

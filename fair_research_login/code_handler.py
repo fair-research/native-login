@@ -80,7 +80,7 @@ class CodeHandler(object):
         the Native App Auth Flow.
         :return: Code returned by Globus Auth
         """
-        raise NotImplemented()
+        raise NotImplementedError()
 
     def is_remote_session(self):
         """

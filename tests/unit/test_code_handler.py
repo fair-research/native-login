@@ -6,7 +6,7 @@ try:
 except ImportError:
     from mock import Mock
 
-from native_login.code_handler import InputCodeHandler, CodeHandler
+from fair_research_login.code_handler import InputCodeHandler, CodeHandler
 
 
 def test_code_handler_extendable_methods():

@@ -12,9 +12,8 @@ def test_refresh(live_client):
     for tset in tokens.values():
         tset['expires_at_seconds'] = 0
     live_client.save_tokens(tokens)
-    live_client.load_tokens()
-    for old_t, new_t in (tokens.values(), live_client.load_tokens().values()):
-        assert old_t['access_token'] != new_t['access_token']
+    for rs, new_tokens in live_client.load_tokens().items():
+        assert tokens[rs]['access_token'] != new_tokens['access_token']
 
 
 @pytest.mark.skip(reason='Integration test')

@@ -7,7 +7,7 @@ do is provide the read_tokens/write_tokens/clear_tokens functions in an object.
 """
 import json
 import os
-from native_login import NativeClient
+from fair_research_login import NativeClient
 
 
 class MyTokenStorage(object):

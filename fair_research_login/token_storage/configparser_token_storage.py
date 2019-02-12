@@ -1,7 +1,9 @@
 import os
 from six.moves.configparser import ConfigParser
 
-from native_login.token_storage.storage_tools import flat_pack, flat_unpack
+from fair_research_login.token_storage.storage_tools import (
+    flat_pack, flat_unpack
+)
 
 
 class ConfigParserTokenStorage(object):
