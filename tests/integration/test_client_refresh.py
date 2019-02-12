@@ -4,6 +4,7 @@ The most basic usage automatically saves and loads tokens, and provides
 a local server for logging in users.
 """
 import pytest
+import globus_sdk
 
 
 @pytest.mark.skip(reason='Integration test')
@@ -30,3 +31,16 @@ def test_authorizer_refresh_hook(live_client):
     assert old_auth_tok != auth.access_token
     assert saved_token == auth.access_token
     assert saved_token != old_access_token
+
+
+@pytest.mark.skip(reason='Integration test')
+@pytest.mark.trylast
+def test_refresh_no_longer_works_after_logout(live_client):
+    tokens = live_client.login(refresh_tokens=True)
+    live_client.logout()
+    live_client.save_tokens(tokens)
+
+    auth = live_client.get_authorizers()['auth.globus.org']
+    auth.expires_at = 0
+    with pytest.raises(globus_sdk.exc.AuthAPIError):
+        auth.check_expiration_time()
