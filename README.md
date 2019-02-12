@@ -28,7 +28,7 @@ Usage looks like this:
     cli.login(refresh_tokens=True)
 
 
-After that, it's off to scripting:
+The following example uses the Auth API to fetch the logged-in user's identity data and print it:
 
     from globus_sdk import AuthClient
 
