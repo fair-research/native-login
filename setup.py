@@ -6,7 +6,7 @@ version_ns = {}
 with open(os.path.join('fair_research_login', 'version.py')) as f:
     exec(f.read(), version_ns)
 
-with open('README.md') as f:
+with open('README.rst') as f:
     long_description = f.read()
 
 install_requires = []
@@ -38,7 +38,6 @@ setup(
         'Operating System :: MacOS :: MacOS X',
         'Programming Language :: Python',
         'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7'
