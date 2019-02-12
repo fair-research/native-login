@@ -16,7 +16,8 @@ tokens = client.login(
     no_local_server=False,
     # You can also turn off automatically opening the Auth URL
     no_browser=False,
-    # refresh tokens are fully supported, but optional
+    # refresh tokens are fully supported. You can turn them off for better
+    # security
     refresh_tokens=True,
 )
 

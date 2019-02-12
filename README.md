@@ -37,6 +37,9 @@ The following example uses the Auth API to fetch the logged-in user's identity d
 
 See the 'examples' directory for extended usage.
 
+Warning: `login()` above uses refresh tokens by default. For increased security,
+you can use `cli.login(refresh_tokens=False)`.
+
 ### Testing
 
 Install the test requirements:

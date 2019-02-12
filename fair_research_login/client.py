@@ -38,7 +38,7 @@ class NativeClient(object):
         self.default_scopes = default_scopes
 
     def login(self, no_local_server=False, no_browser=False,
-              requested_scopes=(), refresh_tokens=None,
+              requested_scopes=(), refresh_tokens=True,
               prefill_named_grant=None, additional_params=None, force=False):
         """
         Do a Native App Auth Flow to get tokens for requested scopes. This
