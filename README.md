@@ -24,15 +24,15 @@ Usage looks like this:
 
     from native_login.client import NativeClient
 
-    tokens = NativeClient(client_id='<client_id>', app_name='My App').login()
+    cli = NativeClient(client_id='<client_id>', app_name='My App')
+    cli.login(refresh_tokens=True)
 
 
-After that, it's off to scripting:
+The following example uses the Auth API to fetch the logged-in user's identity data and print it:
 
-    from globus_sdk import AccessTokenAuthorizer, AuthClient
+    from globus_sdk import AuthClient
 
-    authorizer = AccessTokenAuthorizer(tokens['auth.globus.org']['access_token'])
-    auth_client = AuthClient(authorizer=authorizer)
+    auth_client = AuthClient(authorizer=cli.get_authorizers()['auth.globus.org'])
     print(auth_client.oauth2_userinfo())
 
 See the 'examples' directory for extended usage.
