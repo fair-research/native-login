@@ -1,0 +1,13 @@
+sudo: false
+language: python
+python:
+  - "2.7"
+  - "3.5"
+  - "3.6"
+  - "3.7"
+install:
+  - pip install -r requirements.txt
+  - pip install -r test-requirements.txt
+script:
+  - flake8 fair_research_login tests examples
+  - pytest --cov=fair_research_login tests/

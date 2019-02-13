@@ -1,3 +1,5 @@
+.. image:: https://travis-ci.org/fair-research/native-login.svg?branch=master
+    :target: https://travis-ci.org/fair-research/native-login
 
 .. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
     :alt: License
