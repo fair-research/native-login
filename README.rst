@@ -37,7 +37,7 @@ Usage looks like this:
     from fair_research_login.client import NativeClient
 
     cli = NativeClient(client_id='<client_id>', app_name='My App')
-    cli.login(refresh_tokens=True)
+    cli.login()
 
 
 The following example uses the Auth API to fetch the logged-in user's identity data and print it:
@@ -50,6 +50,21 @@ The following example uses the Auth API to fetch the logged-in user's identity d
     print(auth_client.oauth2_userinfo())
 
 See the 'examples' directory for extended usage.
+
+
+Refresh Tokens
+--------------
+
+By default, regular tokens will expire in a couple days. You can request refresh tokens to make
+user logins last forever. This is handy if you need to do long running tasks or small tasks
+every day, but you need to be *absolutely certain these tokens are in a secure location*.
+
+Request refresh tokens with one extra argument to login:
+
+.. code-block:: python
+
+    cli.login(refresh_tokens=True)
+
 
 Testing
 -------
