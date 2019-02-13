@@ -1,0 +1,19 @@
+sudo: false
+language: python
+python:
+  - "2.7"
+  - "3.5"
+  - "3.6"
+# Enable 3.7 without globally enabling sudo and dist: xenial for other build jobs
+matrix:
+  include:
+    - python: 3.7
+      dist: xenial
+      sudo: true
+install:
+  - pip install -r requirements.txt
+  - pip install -r test-requirements.txt
+script:
+  - flake8 fair_research_login tests examples
+  - pytest --cov=fair_research_login --cov-report=term tests/
+after_success: coveralls

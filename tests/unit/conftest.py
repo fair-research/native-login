@@ -4,6 +4,7 @@ import time
 from copy import deepcopy
 from .mocks import MemoryStorage, MOCK_TOKEN_SET
 import six
+from fair_research_login import CodeHandler
 
 import globus_sdk
 
@@ -66,6 +67,13 @@ def mock_webbrowser(monkeypatch):
     mock = Mock()
     monkeypatch.setattr(webbrowser, 'open', mock)
     return mock
+
+
+@pytest.fixture
+def mock_is_remote_session(monkeypatch):
+    func_mock = Mock(return_value=False)
+    monkeypatch.setattr(CodeHandler, 'is_remote_session', func_mock)
+    return func_mock
 
 
 @pytest.fixture

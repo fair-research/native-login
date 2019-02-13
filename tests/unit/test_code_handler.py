@@ -27,7 +27,8 @@ def test_code_handler_exits_on_interrupt(monkeypatch):
 
 
 def test_code_handler_authenticate_with_webbrowser(mock_webbrowser,
-                                                   mock_input):
+                                                   mock_input,
+                                                   mock_is_remote_session):
     InputCodeHandler().authenticate('http://foo.edu', no_browser=False)
     assert mock_input.called
     assert mock_webbrowser.called
