@@ -1,6 +1,15 @@
 .. image:: https://travis-ci.org/fair-research/native-login.svg?branch=master
     :target: https://travis-ci.org/fair-research/native-login
 
+.. image:: https://coveralls.io/repos/github/fair-research/native-login/badge.svg?branch=master
+    :target: https://coveralls.io/github/fair-research/native-login?branch=master
+
+.. image:: https://img.shields.io/pypi/v/fair-research-login.svg
+    :target: https://pypi.python.org/pypi/fair-research-login
+
+.. image:: https://img.shields.io/pypi/wheel/fair-research-login.svg
+    :target: https://pypi.python.org/pypi/fair-research-login
+
 .. image:: https://img.shields.io/badge/License-Apache%202.0-blue.svg
     :alt: License
     :target: https://opensource.org/licenses/Apache-2.0
