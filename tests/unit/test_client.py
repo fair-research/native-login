@@ -249,6 +249,15 @@ def test_get_scope_set(mock_tokens):
     assert set(NativeClient.get_scope_set(mock_tokens)) == scopes
 
 
-def test_check_scopes_with_valid_scopes(expired_login_group):
-    scopes = NativeClient.get_scope_set(expired_login_group[0])
-    assert NativeClient.check_scopes(expired_login_group[0], scopes) is True
+def test_check_scopes_with_valid_scopes(mock_tokens):
+    scopes = NativeClient.get_scope_set(mock_tokens)
+    assert NativeClient.check_scopes(mock_tokens, scopes) is True
+
+
+def test_check_scopes_with_differing_scopes(mock_tokens):
+    ck = NativeClient.check_scopes(mock_tokens, ['scope_was_never_requested'])
+    assert ck == False
+
+
+def test_subset_does_not_raise_errors(mock_tokens):
+    assert NativeClient.check_scopes(mock_tokens, ['custom_scope']) is True

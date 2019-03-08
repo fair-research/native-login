@@ -382,7 +382,7 @@ class NativeClient(object):
                 }, ...
             }
         """
-        return set(cls.get_scope_set(tokens)) == set(requested_scopes)
+        return set(requested_scopes).issubset(set(cls.get_scope_set(tokens)))
 
     @staticmethod
     def get_expired(tokens):
