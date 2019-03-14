@@ -113,4 +113,7 @@ def flat_unpack(flat_tokens, fetch_key=default_fetch_key):
             tset['expires_at_seconds'] = int(tset['expires_at_seconds'])
 
         token_sets[resource_server] = tset
-    return token_sets
+    # It's possible for the 'fetch_key' to match the name of the resource
+    # server. This shouldn't matter if we only rely on the key for fetching
+    # items and use the stored value in 'resource_server' for the real name
+    return {tset['resource_server']: tset for tset in token_sets.values()}
