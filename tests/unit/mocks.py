@@ -35,6 +35,17 @@ MOCK_TOKEN_SET = {
     }
 }
 
+MOCK_TOKEN_SET_UNDERSCORES = {
+    'resource_server_with_underscores': {
+        'scope': 'all',
+        'access_token': '<token>',
+        'refresh_token': None,
+        'token_type': 'Bearer',
+        'expires_at_seconds': DEFAULT_EXPIRE,
+        'resource_server': 'resource_server_with_underscores'
+    }
+}
+
 
 class MemoryStorage(object):
     def __init__(self):

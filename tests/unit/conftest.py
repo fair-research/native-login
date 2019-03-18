@@ -2,7 +2,7 @@ import pytest
 import webbrowser
 import time
 from copy import deepcopy
-from .mocks import MemoryStorage, MOCK_TOKEN_SET
+from .mocks import MemoryStorage, MOCK_TOKEN_SET, MOCK_TOKEN_SET_UNDERSCORES
 import six
 from fair_research_login import CodeHandler
 
@@ -22,6 +22,11 @@ def mem_storage():
 @pytest.fixture
 def mock_tokens():
     return deepcopy(MOCK_TOKEN_SET)
+
+
+@pytest.fixture
+def mock_tokens_underscores():
+    return deepcopy(MOCK_TOKEN_SET_UNDERSCORES)
 
 
 @pytest.fixture

@@ -42,5 +42,10 @@ def test_flat_pack_unpack(mock_tokens):
     assert exercised_tokens == mock_tokens
 
 
+def test_flat_unpack_rs_with_underscores(mock_tokens_underscores):
+    exercised_tokens = flat_unpack(flat_pack(mock_tokens_underscores))
+    assert exercised_tokens == mock_tokens_underscores
+
+
 def test_flat_unpack_with_empty_value():
     assert flat_unpack({}) == {}
