@@ -1,4 +1,5 @@
 import os
+import stat
 from six.moves.configparser import ConfigParser
 
 from fair_research_login.token_storage.storage_tools import (
@@ -13,12 +14,14 @@ class ConfigParserTokenStorage(object):
     config data to disk.
     """
     DEFAULT_FILENAME = os.path.expanduser('~/.globus-native-apps.cfg')
+    DEFAULT_PERMISSION = stat.S_IRUSR | stat.S_IWUSR
     CONFIG_TOKEN_GROUPS = 'token_groups'
     CFG_SECTION = 'tokens'
 
-    def __init__(self, filename=None, section=None):
+    def __init__(self, filename=None, section=None, permission=None):
         self.section = section or self.CFG_SECTION
         self.filename = filename or self.DEFAULT_FILENAME
+        self.permission = permission or self.DEFAULT_PERMISSION
 
     def load(self):
         config = ConfigParser()
@@ -30,6 +33,7 @@ class ConfigParserTokenStorage(object):
     def save(self, config):
         with open(self.filename, 'w') as configfile:
             config.write(configfile)
+        os.chmod(self.filename, self.DEFAULT_PERMISSION)
 
     def write_tokens(self, tokens):
         config = self.load()

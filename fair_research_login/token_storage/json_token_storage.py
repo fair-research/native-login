@@ -1,5 +1,6 @@
 import json
 import os
+import stat
 
 
 class JSONTokenStorage(object):
@@ -7,8 +8,9 @@ class JSONTokenStorage(object):
     Stores tokens in json format on disk in the local directory by default.
     """
 
-    def __init__(self, filename=None):
+    def __init__(self, filename=None, permission=None):
         self.filename = filename or 'mytokens.json'
+        self.permission = permission or stat.S_IRUSR | stat.S_IWUSR
 
     def write_tokens(self, tokens):
         with open(self.filename, 'w+') as fh:
