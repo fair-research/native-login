@@ -49,17 +49,17 @@ def test_revoke_login(mock_revoke, mock_tokens):
     assert mock_revoke.call_count == 6
 
 
-def test_logout(mock_revoke, mock_tokens, mem_storage):
+def test_logout(mock_revoke, login_token_group, mem_storage):
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
-    mem_storage.tokens = mock_tokens
+    mem_storage.tokens = login_token_group
     cli.logout()
     assert mock_revoke.call_count == 6
 
 
-def test_load_tokens(mem_storage, mock_tokens):
+def test_load_tokens(mem_storage, login_token_group):
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
-    mem_storage.tokens = mock_tokens
-    assert cli.load_tokens() == mock_tokens
+    mem_storage.tokens = login_token_group
+    assert cli.load_tokens() == login_token_group[0]
 
 
 def test_load_no_tokens_raises_error(mem_storage):
@@ -107,10 +107,10 @@ def test_login_with_no_storage(mock_input, mock_webbrowser,
     assert tokens == mock_token_response.by_resource_server
 
 
-def test_load_raises_scopes_mismatch(mem_storage, mock_tokens):
+def test_load_raises_scopes_mismatch(mem_storage, login_token_group):
     cli = NativeClient(client_id=str(uuid4()),
                        token_storage=mem_storage)
-    mem_storage.tokens = mock_tokens
+    mem_storage.tokens = login_token_group
     with pytest.raises(ScopesMismatch):
         cli.load_tokens(requested_scopes=['foo'])
 
@@ -148,19 +148,19 @@ def test_client_token_refresh_without_tokens_raises(mock_tokens):
         cli.refresh_tokens(mock_tokens)
 
 
-def test_client_token_refresh_with_tokens(expired_tokens_with_refresh,
+def test_client_token_refresh_with_tokens(expired_login_with_refresh,
                                           mock_refresh_token_authorizer):
     cli = NativeClient(client_id=str(uuid4()), token_storage=None)
-    tokens = cli.refresh_tokens(expired_tokens_with_refresh)
+    tokens = cli.refresh_tokens(expired_login_with_refresh[0])
     for tset in tokens.values():
         assert tset['access_token'] == '<Refreshed Access Token>'
 
 
-def test_client_get_authorizers(mock_tokens,
+def test_client_get_authorizers(login_token_group,
                                 mock_refresh_token_authorizer,
                                 mem_storage):
-    mock_tokens['resource.server.org']['refresh_token'] = '<Refresh Token>'
-    mem_storage.tokens = mock_tokens
+    login_token_group[0]['resource.server.org']['refresh_token'] = '<Resh Tok>'
+    mem_storage.tokens = login_token_group
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     for rs, authorizer in cli.get_authorizers().items():
         if rs == 'resource.server.org':
@@ -169,20 +169,20 @@ def test_client_get_authorizers(mock_tokens,
             assert isinstance(authorizer, AccessTokenAuthorizer)
 
 
-def test_client_load_auto_refresh(expired_tokens_with_refresh, mem_storage,
+def test_client_load_auto_refresh(expired_login_with_refresh, mem_storage,
                                   mock_refresh_token_authorizer):
-    mem_storage.tokens = expired_tokens_with_refresh
+    mem_storage.tokens = expired_login_with_refresh
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     tokens = cli.load_tokens()
     for tset in tokens.values():
         assert tset['access_token'] == '<Refreshed Access Token>'
 
 
-def test_authorizer_refresh_hook(mock_tokens,
+def test_authorizer_refresh_hook(login_token_group,
                                  mock_refresh_token_authorizer,
                                  mem_storage):
-    mock_tokens['resource.server.org']['refresh_token'] = '<Refresh Token>'
-    mem_storage.tokens = mock_tokens
+    login_token_group[0]['resource.server.org']['refresh_token'] = '<Ref Tok>'
+    mem_storage.tokens = login_token_group
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     rs_auth = cli.get_authorizers()['resource.server.org']
     rs_auth.expires_at = 0
@@ -192,9 +192,35 @@ def test_authorizer_refresh_hook(mock_tokens,
     assert 'example.on.refresh.success' in tokens.keys()
 
 
-def test_client_when_cannot_refresh(mock_expired_tokens, mem_storage,
+def test_client_when_cannot_refresh(expired_login_group, mem_storage,
                                     mock_refresh_token_authorizer):
-    mem_storage.tokens = mock_expired_tokens
+    mem_storage.tokens = expired_login_group
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     with pytest.raises(TokensExpired):
         cli.load_tokens()
+
+
+# def test_check_expired_with_valid_tokens(mock_tokens):
+#     assert check_expired(mock_tokens) is None
+#
+#
+# def test_check_expired(mock_expired_tokens):
+#     with pytest.raises(TokensExpired):
+#         check_expired(mock_expired_tokens)
+#
+#
+# def test_expired_contains_useful_info(mock_expired_tokens):
+#     exc = None
+#     try:
+#         check_expired(mock_expired_tokens)
+#     except TokensExpired as te:
+#         exc = te
+#     assert exc
+#     for token in mock_expired_tokens:
+#         assert token in str(exc)
+#
+#
+# def test_check_scopes_with_valid_scopes(mock_tokens):
+#     scopes = ['custom_scope', 'profile', 'openid', 'email',
+#               'urn:globus:auth:scope:transfer.api.globus.org:all']
+#     assert check_scopes(mock_tokens, scopes) is None

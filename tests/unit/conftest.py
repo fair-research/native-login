@@ -25,22 +25,27 @@ def mock_tokens():
 
 
 @pytest.fixture
-def mock_tokens_underscores():
-    return deepcopy(MOCK_TOKEN_SET_UNDERSCORES)
+def login_token_group_underscores():
+    return [deepcopy(MOCK_TOKEN_SET_UNDERSCORES)]
 
 
 @pytest.fixture
-def mock_expired_tokens(mock_tokens):
+def login_token_group(mock_tokens):
+    return [mock_tokens]
+
+
+@pytest.fixture
+def expired_login_group(mock_tokens):
     for tset in mock_tokens.values():
         tset['expires_at_seconds'] = 0
-    return mock_tokens
+    return [mock_tokens]
 
 
 @pytest.fixture
-def expired_tokens_with_refresh(mock_expired_tokens):
-    for tset in mock_expired_tokens.values():
+def expired_login_with_refresh(expired_login_group):
+    for tset in expired_login_group[0].values():
         tset['refresh_token'] = '<Mock Refresh Token>'
-    return mock_expired_tokens
+    return expired_login_group
 
 
 @pytest.fixture

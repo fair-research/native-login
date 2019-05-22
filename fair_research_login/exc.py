@@ -12,6 +12,15 @@ class LoadError(LoginException):
     pass
 
 
+class TokenStorageDisabled(LoadError):
+    pass
+
+
+class NoSavedTokens(LoadError):
+    """There were no saved tokens to load"""
+    pass
+
+
 class ScopesMismatch(LoadError):
     """
     Requested scopes do not match loaded scopes
@@ -26,9 +35,9 @@ class TokensExpired(LoadError):
     def __init__(self, *args, **kwargs):
         super(TokensExpired, self).__init__(*args)
         self.resource_servers = kwargs.get('resource_servers', ())
+        self.scopes = kwargs.get('scopes', ())
 
     def __str__(self):
         return '{} {}'.format(
-            super(TokensExpired, self).__str__(),
-            ', '.join(self.resource_servers)
+            super(TokensExpired, self).__str__(), ', '.join(self.scopes)
         )

@@ -19,7 +19,7 @@ else:
     BUILTIN_OPEN = '__builtin__.open'
 
 
-def test_json_token_storage(mock_tokens, mock_revoke, monkeypatch):
+def test_json_token_storage(login_token_group, mock_revoke, monkeypatch):
     cli = NativeClient(client_id=str(uuid.uuid4()),
                        token_storage=JSONTokenStorage())
     # Mock actual call to open(). Catch the data 'written' and use it in the
@@ -28,7 +28,7 @@ def test_json_token_storage(mock_tokens, mock_revoke, monkeypatch):
     monkeypatch.setattr(os.path, 'exists', lambda x: True)
     mo = mock_open()
     with patch(BUILTIN_OPEN, mo):
-        cli.save_tokens(mock_tokens)
+        cli.save_tokens(login_token_group)
         written = ''.join([c[1][0] for c in mo().write.mock_calls])
     with patch(BUILTIN_OPEN, mock_open(read_data=written)):
         tokens = cli.load_tokens()
@@ -46,7 +46,9 @@ def test_json_token_storage_non_existant_filename():
 
 def test_config_parser_read_token_storage(mock_token_response):
     cfg = ConfigParserTokenStorage(filename=CONFIGPARSER_VALID_CFG)
-    tokens = cfg.read_tokens()
+    login_groups = cfg.read_tokens()
+    assert len(login_groups) == 1
+    tokens = login_groups[0]
     assert isinstance(tokens, dict)
     assert tokens.get('resource.server.org')
     assert len(tokens['resource.server.org'].values()) == 6
@@ -54,14 +56,14 @@ def test_config_parser_read_token_storage(mock_token_response):
 
 @pytest.mark.skipif(sys.version_info < (3, 0),
                     reason='Python 2 builtin changed, patching won\'t work')
-def test_config_parser_write_token_storage(mock_tokens):
+def test_config_parser_write_token_storage(login_token_group):
     cfg = ConfigParserTokenStorage(filename=CONFIGPARSER_VALID_CFG)
     mo = mock_open()
     with patch('builtins.open', mo):
-        cfg.write_tokens(mock_tokens)
+        cfg.write_tokens(login_token_group)
         written = ''.join([c[1][0] for c in mo().write.mock_calls])
 
-    token_data = mock_tokens['resource.server.org']
+    token_data = login_token_group[0]['resource.server.org']
     del token_data['refresh_token']
     for val in token_data.values():
         assert str(val) in written
