@@ -6,7 +6,11 @@ from fair_research_login.local_server import LocalServerCodeHandler
 from fair_research_login.token_storage import (
     MultiClientTokenStorage, check_expired, check_scopes
 )
-from fair_research_login.exc import LoadError, TokensExpired
+from fair_research_login.exc import (
+    LoadError, TokensExpired, TokenStorageDisabled, NoSavedTokens,
+    ScopesMismatch
+)
+from fair_research_login.refresh import RefreshHelper
 
 
 class NativeClient(object):
@@ -82,7 +86,13 @@ class NativeClient(object):
                                                   no_browser=no_browser)
         token_response = self.client.oauth2_exchange_code_for_tokens(auth_code)
         try:
-            self.save_tokens(token_response.by_resource_server)
+            tokens = []
+            try:
+                tokens = self._load_raw_tokens()
+            except LoadError:
+                pass
+            tokens.append(token_response.by_resource_server)
+            self.save_tokens(tokens)
         except LoadError:
             pass
         return token_response.by_resource_server
@@ -102,7 +112,11 @@ class NativeClient(object):
         """
         if self.token_storage is not None:
             return self.token_storage.write_tokens(tokens)
-        raise LoadError('No token_storage set on client.')
+        raise TokenStorageDisabled('No token_storage set on client.')
+
+    def _get_newest_token(self, token_group):
+        exps = [item['expires_at_seconds'] for item in token_group.values()]
+        return max(exps)
 
     def _load_raw_tokens(self):
         """
@@ -110,8 +124,13 @@ class NativeClient(object):
         :return: tokens by resource server, or an exception if that fails
         """
         if self.token_storage is not None:
-            return self.token_storage.read_tokens()
-        raise LoadError('No token_storage set on client.')
+            login_group = self.token_storage.read_tokens()
+            login_group.sort(
+                key=lambda tgroup: self._get_newest_token(tgroup),
+                reverse=True
+            )
+            return login_group
+        raise TokenStorageDisabled('No token_storage set on client.')
 
     def load_tokens(self, requested_scopes=None):
         """
@@ -120,28 +139,38 @@ class NativeClient(object):
         requested scopes. Raises ScopesMismatch if there is a discrepancy.
         :return: Loaded tokens, or a LoadError if loading fails.
         """
-        tokens = self._load_raw_tokens()
+        login_list = self._load_raw_tokens()
 
-        if not tokens:
-            raise LoadError('No Tokens loaded')
+        if not login_list:
+            raise NoSavedTokens('No tokens are available.')
 
-        if requested_scopes not in [None, ()]:
-            check_scopes(tokens, requested_scopes)
-        try:
-            check_expired(tokens)
-        except TokensExpired as te:
-            expired = {rs: tokens[rs] for rs in te.resource_servers}
-            if not self._refreshable(expired):
-                raise
-            tokens.update(self.refresh_tokens(expired))
-            self.save_tokens(tokens)
-        return tokens
+        # Flag to check if there was a scope match when checking tokens. If
+        # there was, but they expired, we prefer to throw an expired exception.
+        scope_match = False
+        for tok_candidate in login_list:
+            if requested_scopes not in [None, ()]:
+                if not check_scopes(tok_candidate, requested_scopes):
+                    continue
+            scope_match = True
+            try:
+                check_expired(tok_candidate)
+            except TokensExpired as te:
+                expired = {rs: tok_candidate[rs] for rs in te.resource_servers}
+                if not self.are_refreshable(expired):
+                    continue
+                tok_candidate.update(self.refresh_tokens(expired))
+                self.save_tokens(login_list)
+            return tok_candidate
 
-    def _refreshable(self, tokens):
-        return all([bool(ts['refresh_token']) for ts in tokens.values()])
+        if scope_match:
+            raise TokensExpired('A previous login matched {} but the tokens '
+                                'have expired.'.format(requested_scopes))
+        else:
+            raise ScopesMismatch('No saved tokens match the scopes: {}'
+                                 .format(requested_scopes))
 
     def refresh_tokens(self, tokens):
-        if not self._refreshable(tokens):
+        if not self.are_refreshable(tokens):
             raise TokensExpired('No Refresh Token, cannot refresh tokens: ',
                                 resource_servers=tokens.keys())
 
@@ -157,16 +186,18 @@ class NativeClient(object):
             token_dict['expires_at_seconds'] = authorizer.expires_at
         return tokens
 
-    def get_authorizers(self):
+    def get_authorizers(self, requested_scopes=None):
         authorizers = {}
-        for resource_server, token_dict in self.load_tokens().items():
+        tokens = self.load_tokens(requested_scopes)
+        explicit_scopes = requested_scopes or self.get_scope_set(tokens)
+        for resource_server, token_dict in tokens.items():
             if token_dict.get('refresh_token') is not None:
                 authorizers[resource_server] = RefreshTokenAuthorizer(
                     token_dict['refresh_token'],
                     self.client,
                     access_token=token_dict['access_token'],
                     expires_at=token_dict['expires_at_seconds'],
-                    on_refresh=self.on_refresh,
+                    on_refresh=RefreshHelper(self, explicit_scopes),
                 )
             else:
                 authorizers[resource_server] = AccessTokenAuthorizer(
@@ -174,19 +205,29 @@ class NativeClient(object):
                 )
         return authorizers
 
-    def on_refresh(self, token_response):
-        loaded_tokens = self._load_raw_tokens()
-        loaded_tokens.update(token_response.by_resource_server)
-        self.save_tokens(loaded_tokens)
-
     def logout(self):
         """
         Revoke saved tokens and clear them from storage
         """
-        self.revoke_token_set(self._load_raw_tokens())
+        for tset in self._load_raw_tokens():
+            self.revoke_token_set(tset)
         self.token_storage.clear_tokens()
 
     def revoke_token_set(self, tokens):
         for rs, tok_set in tokens.items():
             self.client.oauth2_revoke_token(tok_set.get('access_token'))
             self.client.oauth2_revoke_token(tok_set.get('refresh_token'))
+
+    @staticmethod
+    def get_scope_set(token_group):
+        scopes = [tset['scope'].split() for tset in token_group.values()]
+        flat_list = [item for sublist in scopes for item in sublist]
+        return flat_list
+
+    @classmethod
+    def check_scopes(cls, tokens, requested_scopes):
+        return set(cls.get_scope_set(tokens)) == set(requested_scopes)
+
+    @staticmethod
+    def are_refreshable(tokens):
+        return all([bool(ts['refresh_token']) for ts in tokens.values()])

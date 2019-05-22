@@ -50,7 +50,7 @@ MOCK_TOKEN_SET_UNDERSCORES = {
 class MemoryStorage(object):
     def __init__(self):
         super(MemoryStorage, self).__init__()
-        self.tokens = {}
+        self.tokens = []
 
     def write_tokens(self, tokens):
         self.tokens = tokens
@@ -59,4 +59,4 @@ class MemoryStorage(object):
         return self.tokens
 
     def clear_tokens(self):
-        self.tokens = {}
+        self.tokens = []
