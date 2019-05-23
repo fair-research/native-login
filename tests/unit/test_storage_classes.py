@@ -11,7 +11,8 @@ except ImportError:
 
 from fair_research_login import (ConfigParserTokenStorage, JSONTokenStorage,
                                  NativeClient)
-from .mocks import MOCK_TOKEN_SET, CONFIGPARSER_VALID_CFG
+from .mocks import (MOCK_TOKEN_SET, CONFIGPARSER_VALID_CFG,
+                    CONFIGPARSER_VALID_LEGACY_CFG)
 
 if sys.version_info.major == 3:
     BUILTIN_OPEN = 'builtins.open'
@@ -46,6 +47,16 @@ def test_json_token_storage_non_existant_filename():
 
 def test_config_parser_read_token_storage(mock_token_response):
     cfg = ConfigParserTokenStorage(filename=CONFIGPARSER_VALID_CFG)
+    login_groups = cfg.read_tokens()
+    assert len(login_groups) == 1
+    tokens = login_groups[0]
+    assert isinstance(tokens, dict)
+    assert tokens.get('resource.server.org')
+    assert len(tokens['resource.server.org'].values()) == 6
+
+
+def test_config_parser_legacy_storage(mock_token_response):
+    cfg = ConfigParserTokenStorage(filename=CONFIGPARSER_VALID_LEGACY_CFG)
     login_groups = cfg.read_tokens()
     assert len(login_groups) == 1
     tokens = login_groups[0]

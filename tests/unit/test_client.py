@@ -8,7 +8,9 @@ from fair_research_login.token_storage.configparser_token_storage import (
 )
 from fair_research_login.local_server import LocalServerCodeHandler
 from fair_research_login.code_handler import InputCodeHandler
-from fair_research_login.exc import LoadError, ScopesMismatch, TokensExpired
+from fair_research_login.exc import (
+    LoadError, ScopesMismatch, TokensExpired, NoSavedTokens
+)
 from fair_research_login.version import __version__
 
 
@@ -107,6 +109,13 @@ def test_login_with_no_storage(mock_input, mock_webbrowser,
     assert tokens == mock_token_response.by_resource_server
 
 
+def test_load_with_no_saved_tokens(mem_storage):
+    mem_storage.tokens = []
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    with pytest.raises(NoSavedTokens):
+        cli.load_tokens()
+
+
 def test_load_raises_scopes_mismatch(mem_storage, login_token_group):
     cli = NativeClient(client_id=str(uuid4()),
                        token_storage=mem_storage)
@@ -127,6 +136,24 @@ def test_client_load_errors_silenced_on_login(
                        token_storage=None)
     tokens = cli.login()
     assert tokens == mock_token_response.by_resource_server
+
+
+def test_load_resolves_scopes_on_multi_login(
+        mem_storage, mock_tokens,
+        login_token_group_underscores):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    mem_storage.tokens = [
+        {'auth.globus.org': mock_tokens['auth.globus.org']},
+        mock_tokens,
+        login_token_group_underscores[0],
+    ]
+    # None of these should throw errors
+    cli.load_tokens(requested_scopes=['rs_w_underscores_scope'])
+    cli.load_tokens(requested_scopes=['openid', 'email', 'profile'])
+    cli.load_tokens(requested_scopes=[
+        'custom_scope', 'urn:globus:auth:scope:transfer.api.globus.org:all',
+        'openid', 'email', 'profile'
+    ])
 
 
 def test_client_token_refresh_without_tokens_raises(mock_tokens):

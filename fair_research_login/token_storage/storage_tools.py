@@ -1,25 +1,4 @@
-import time
-
-from fair_research_login.exc import TokensExpired, ScopesMismatch, LoadError
-
-
-def check_expired(tokens):
-    expired = [
-        rs for rs, tset in tokens.items()
-        if time.time() >= tset['expires_at_seconds']
-    ]
-    if expired:
-        raise TokensExpired(resource_servers=expired)
-
-
-def check_scopes(tokens, requested_scopes):
-    scopes = [tset['scope'].split() for tset in tokens.values()]
-    flat_list = [item for sublist in scopes for item in sublist]
-    if set(flat_list) != set(requested_scopes):
-        raise ScopesMismatch('Requested Scopes do not match loaded'
-                             ' Scopes for Globus Auth. \nCurrent: {}\n'
-                             'Requested: {}'.format(set(flat_list),
-                                                    set(requested_scopes)))
+from fair_research_login.exc import LoadError
 
 
 def default_name_key(group_key, key, login):
