@@ -227,27 +227,21 @@ def test_client_when_cannot_refresh(expired_login_group, mem_storage,
         cli.load_tokens()
 
 
-# def test_check_expired_with_valid_tokens(mock_tokens):
-#     assert check_expired(mock_tokens) is None
-#
-#
-# def test_check_expired(mock_expired_tokens):
-#     with pytest.raises(TokensExpired):
-#         check_expired(mock_expired_tokens)
-#
-#
-# def test_expired_contains_useful_info(mock_expired_tokens):
-#     exc = None
-#     try:
-#         check_expired(mock_expired_tokens)
-#     except TokensExpired as te:
-#         exc = te
-#     assert exc
-#     for token in mock_expired_tokens:
-#         assert token in str(exc)
-#
-#
-# def test_check_scopes_with_valid_scopes(mock_tokens):
-#     scopes = ['custom_scope', 'profile', 'openid', 'email',
-#               'urn:globus:auth:scope:transfer.api.globus.org:all']
-#     assert check_scopes(mock_tokens, scopes) is None
+def test_get_expired_with_valid_tokens(mock_tokens):
+    assert not NativeClient.get_expired(mock_tokens)
+
+
+def test_get_expired(expired_login_group):
+    expired = NativeClient.get_expired(expired_login_group[0])
+    assert expired == expired_login_group[0]
+
+
+def test_get_scope_set(mock_tokens):
+    scopes = {'custom_scope', 'profile', 'openid', 'email',
+              'urn:globus:auth:scope:transfer.api.globus.org:all'}
+    assert set(NativeClient.get_scope_set(mock_tokens)) == scopes
+
+
+def test_check_scopes_with_valid_scopes(expired_login_group):
+    scopes = NativeClient.get_scope_set(expired_login_group[0])
+    assert NativeClient.check_scopes(expired_login_group[0], scopes) is True
