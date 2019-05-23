@@ -4,6 +4,9 @@ import os
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 CONFIGPARSER_VALID_CFG = os.path.join(DATA_PATH, 'configparser_valid.cfg')
+CONFIGPARSER_VALID_LEGACY_CFG = os.path.join(
+    DATA_PATH, 'configparser_valid_legacy.cfg'
+)
 
 DEFAULT_EXPIRE = int(time.time()) + 60 * 60 * 48
 
@@ -37,7 +40,7 @@ MOCK_TOKEN_SET = {
 
 MOCK_TOKEN_SET_UNDERSCORES = {
     'resource_server_with_underscores': {
-        'scope': 'all',
+        'scope': 'rs_w_underscores_scope',
         'access_token': '<token>',
         'refresh_token': None,
         'token_type': 'Bearer',

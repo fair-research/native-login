@@ -1,11 +1,10 @@
+import time
 from globus_sdk import (NativeAppAuthClient, RefreshTokenAuthorizer,
                         AccessTokenAuthorizer)
 
 from fair_research_login.code_handler import InputCodeHandler
 from fair_research_login.local_server import LocalServerCodeHandler
-from fair_research_login.token_storage import (
-    MultiClientTokenStorage, check_expired, check_scopes
-)
+from fair_research_login.token_storage import MultiClientTokenStorage
 from fair_research_login.exc import (
     LoadError, TokensExpired, TokenStorageDisabled, NoSavedTokens,
     ScopesMismatch
@@ -152,22 +151,22 @@ class NativeClient(object):
         scope_match = False
         for tok_candidate in login_list:
             if requested_scopes not in [None, ()]:
-                if not check_scopes(tok_candidate, requested_scopes):
+                if not self.check_scopes(tok_candidate, requested_scopes):
                     continue
             scope_match = True
-            try:
-                check_expired(tok_candidate)
-            except TokensExpired as te:
-                expired = {rs: tok_candidate[rs] for rs in te.resource_servers}
-                if not self.are_refreshable(expired):
-                    continue
-                tok_candidate.update(self.refresh_tokens(expired))
-                self.save_tokens(login_list)
-            return tok_candidate
+            expired = self.get_expired(tok_candidate)
+            if not expired:
+                return tok_candidate
+            else:
+                if self.are_refreshable(expired):
+                    tok_candidate.update(self.refresh_tokens(expired))
+                    self.save_tokens(login_list)
+                    return tok_candidate
 
         if scope_match:
             raise TokensExpired('A previous login matched {} but the tokens '
-                                'have expired.'.format(requested_scopes))
+                                'have expired.'.format(requested_scopes),
+                                scopes=requested_scopes)
         else:
             raise ScopesMismatch('No saved tokens match the scopes: {}'
                                  .format(requested_scopes))
@@ -230,6 +229,11 @@ class NativeClient(object):
     @classmethod
     def check_scopes(cls, tokens, requested_scopes):
         return set(cls.get_scope_set(tokens)) == set(requested_scopes)
+
+    @staticmethod
+    def get_expired(tokens):
+        return {rs: tset for rs, tset in tokens.items()
+                if time.time() >= tset['expires_at_seconds']}
 
     @staticmethod
     def are_refreshable(tokens):
