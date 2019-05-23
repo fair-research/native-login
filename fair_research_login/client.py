@@ -257,6 +257,20 @@ class NativeClient(object):
             raise ScopesMismatch('No saved tokens match the scopes: {}'
                                  .format(requested_scopes))
 
+    def load_tokens_by_scope(self, requested_scopes=None):
+        """Like load_tokens(), but returns a dict keyed by token scopes
+        instead of by resource server. If there are multiple scopes requested
+        for the same token (such as ['openid', 'profile', 'email']), each
+        scope will have a duplicate copy of the same information.
+        """
+        tokens = self.load_tokens(requested_scopes)
+        token_group = {}
+        for scope in self.get_scope_set(tokens):
+            for tgroup in tokens.values():
+                if scope in tgroup['scope'].split():
+                    token_group[scope] = tgroup
+        return token_group
+
     def refresh_tokens(self, tokens):
         """
         Explicitly refresh a token. Called automatically by load_tokens().
@@ -292,21 +306,32 @@ class NativeClient(object):
         """
         tokens = self.load_tokens(requested_scopes=requested_scopes)
         explicit_scopes = requested_scopes or self.get_scope_set(tokens)
-        authorizers = {}
-        for resource_server, token_dict in tokens.items():
-            if token_dict.get('refresh_token') is not None:
-                authorizers[resource_server] = RefreshTokenAuthorizer(
-                    token_dict['refresh_token'],
-                    self.client,
-                    access_token=token_dict['access_token'],
-                    expires_at=token_dict['expires_at_seconds'],
-                    on_refresh=RefreshHelper(self, explicit_scopes),
-                )
-            else:
-                authorizers[resource_server] = AccessTokenAuthorizer(
-                    token_dict['access_token']
-                )
-        return authorizers
+        return {rs: self.get_authorizer(tokens, explicit_scopes)
+                for rs, tokens in tokens.items()}
+
+    def get_authorizers_by_scope(self, requested_scopes=None):
+        """
+        Like get_authorizers(), but returns a dict keyed by scope rather than
+        by resource server.
+        """
+        tokens = self.load_tokens_by_scope(requested_scopes)
+        explicit_scopes = requested_scopes or self.get_scope_set(tokens)
+        return {scope: self.get_authorizer(tokens, explicit_scopes)
+                for scope, tokens in tokens.items()}
+
+    def get_authorizer(self, token_dict, requested_scopes):
+        if token_dict.get('refresh_token') is not None:
+            return RefreshTokenAuthorizer(
+                token_dict['refresh_token'],
+                self.client,
+                access_token=token_dict['access_token'],
+                expires_at=token_dict['expires_at_seconds'],
+                on_refresh=RefreshHelper(self, requested_scopes),
+            )
+        else:
+            return AccessTokenAuthorizer(
+                token_dict['access_token']
+            )
 
     def logout(self):
         """
@@ -338,7 +363,7 @@ class NativeClient(object):
         """
         scopes = [tset['scope'].split() for tset in token_group.values()]
         flat_list = [item for sublist in scopes for item in sublist]
-        return flat_list
+        return set(flat_list)
 
     @classmethod
     def check_scopes(cls, tokens, requested_scopes):

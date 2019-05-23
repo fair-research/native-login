@@ -64,6 +64,14 @@ def test_load_tokens(mem_storage, login_token_group):
     assert cli.load_tokens() == login_token_group[0]
 
 
+def test_load_tokens_by_scope(mem_storage, login_token_group):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    mem_storage.tokens = login_token_group
+    tokens = cli.load_tokens_by_scope()
+    assert len(tokens) == 5
+    assert set(tokens.keys()) == set(cli.get_scope_set(cli.load_tokens()))
+
+
 def test_load_no_tokens_raises_error(mem_storage):
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     with pytest.raises(LoadError):
@@ -194,6 +202,18 @@ def test_client_get_authorizers(login_token_group,
             assert isinstance(authorizer, RefreshTokenAuthorizer)
         else:
             assert isinstance(authorizer, AccessTokenAuthorizer)
+    resource_servers = set(login_token_group[0].keys())
+    assert set(cli.get_authorizers().keys()) == resource_servers
+
+
+def test_client_get_authorizers_by_scope(login_token_group,
+                                         mock_refresh_token_authorizer,
+                                         mem_storage):
+    mem_storage.tokens = login_token_group
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    scopes = cli.get_scope_set(login_token_group[0])
+    authorizers = cli.get_authorizers_by_scope()
+    assert set(scopes) == set(authorizers.keys())
 
 
 def test_client_load_auto_refresh(expired_login_with_refresh, mem_storage,
