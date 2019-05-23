@@ -122,6 +122,9 @@ class NativeClient(object):
         """
         tokens = self._load_raw_tokens()
 
+        if requested_scopes is not None and isinstance(requested_scopes, str):
+            requested_scopes = requested_scopes.split(' ')
+
         if not tokens:
             raise LoadError('No Tokens loaded')
 
@@ -157,7 +160,7 @@ class NativeClient(object):
             token_dict['expires_at_seconds'] = authorizer.expires_at
         return tokens
 
-    def get_authorizers(self):
+    def get_authorizers(self, requested_scopes=None):
         authorizers = {}
         for resource_server, token_dict in self.load_tokens().items():
             if token_dict.get('refresh_token') is not None:
