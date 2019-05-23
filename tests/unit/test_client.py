@@ -269,7 +269,7 @@ def test_check_scopes_with_valid_scopes(mock_tokens):
 
 def test_check_scopes_with_differing_scopes(mock_tokens):
     ck = NativeClient.check_scopes(mock_tokens, ['scope_was_never_requested'])
-    assert ck == False
+    assert ck is False
 
 
 def test_subset_does_not_raise_errors(mock_tokens):
