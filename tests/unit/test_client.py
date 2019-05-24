@@ -115,6 +115,19 @@ def test_load_raises_scopes_mismatch(mem_storage, mock_tokens):
         cli.load_tokens(requested_scopes=['foo'])
 
 
+def test_load_accepts_string_or_iterable_requested_scopes(mem_storage,
+                                                          mock_tokens):
+    cli = NativeClient(client_id=str(uuid4()),
+                       token_storage=mem_storage)
+    mem_storage.tokens = mock_tokens
+    scopes = ('openid profile email custom_scope '
+              'urn:globus:auth:scope:transfer.api.globus.org:all')
+    tokens = cli.load_tokens(scopes)
+    assert len(tokens) == 3
+    authorizers = cli.get_authorizers(scopes)
+    assert len(authorizers) == 3
+
+
 def test_client_load_errors_silenced_on_login(
         monkeypatch, mem_storage, mock_input, mock_webbrowser,
         mock_token_response):
