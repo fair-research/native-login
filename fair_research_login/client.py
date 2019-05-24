@@ -161,8 +161,9 @@ class NativeClient(object):
         return tokens
 
     def get_authorizers(self, requested_scopes=None):
+        tokens = self.load_tokens(requested_scopes=requested_scopes)
         authorizers = {}
-        for resource_server, token_dict in self.load_tokens().items():
+        for resource_server, token_dict in tokens.items():
             if token_dict.get('refresh_token') is not None:
                 authorizers[resource_server] = RefreshTokenAuthorizer(
                     token_dict['refresh_token'],
