@@ -133,10 +133,10 @@ def test_load_raises_scopes_mismatch(mem_storage, login_token_group):
 
 
 def test_load_accepts_string_or_iterable_requested_scopes(mem_storage,
-                                                          mock_tokens):
+                                                          login_token_group):
     cli = NativeClient(client_id=str(uuid4()),
                        token_storage=mem_storage)
-    mem_storage.tokens = mock_tokens
+    mem_storage.tokens = login_token_group
     scopes = ('openid profile email custom_scope '
               'urn:globus:auth:scope:transfer.api.globus.org:all')
     tokens = cli.load_tokens(scopes)
