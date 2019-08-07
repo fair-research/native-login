@@ -108,11 +108,19 @@ def test_login_with_no_storage(mock_input, mock_webbrowser,
 
 
 def test_load_raises_scopes_mismatch(mem_storage, mock_tokens):
-    cli = NativeClient(client_id=str(uuid4()),
-                       token_storage=mem_storage)
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     mem_storage.tokens = mock_tokens
     with pytest.raises(ScopesMismatch):
         cli.load_tokens(requested_scopes=['foo'])
+
+
+def test_load_tokens_with_invalid_refresh_token(
+        mem_storage, expired_tokens_with_refresh,
+        refresh_authorizer_raises_invalid_grant):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    mem_storage.tokens = expired_tokens_with_refresh
+    with pytest.raises(TokensExpired):
+        cli.load_tokens()
 
 
 def test_load_accepts_string_or_iterable_requested_scopes(mem_storage,

@@ -25,6 +25,23 @@ def mock_tokens():
 
 
 @pytest.fixture
+def refresh_authorizer_raises_invalid_grant(monkeypatch):
+
+    class MockResponse:
+        status_code = 400
+        headers = {'Content-Type': 'application/json'}
+
+        def json(self):
+            """(400, 'Error', 'invalid_grant')"""
+            return {'message': 'invalid_grant', 'code': 'Error'}
+
+    def err(*args, **kwargs):
+        raise globus_sdk.exc.AuthAPIError(MockResponse())
+    monkeypatch.setattr(globus_sdk.RefreshTokenAuthorizer,
+                        'check_expiration_time', err)
+
+
+@pytest.fixture
 def mock_tokens_underscores():
     return deepcopy(MOCK_TOKEN_SET_UNDERSCORES)
 
