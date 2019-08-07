@@ -204,7 +204,23 @@ class NativeClient(object):
         expiration time.
         """
         if self.token_storage is not None:
-            login_group = self.token_storage.read_tokens()
+            login_group = self.token_storage.read_tokens() or []
+            if not isinstance(login_group, list):
+                raise LoadError('Error reading tokens. Expected list, but got '
+                                '{} instead'.format(type(login_group)))
+            all_dicts = all([isinstance(g, dict) for g in login_group])
+            if login_group and not all_dicts:
+                raise LoadError(
+                    'Error reading tokens. Expected list to contain dicts,'
+                    'got {} instead'.format(type(login_group)))
+            for tgroup in login_group:
+                for rs, token_set in tgroup.items():
+                    try:
+                        int(token_set['expires_at_seconds'])
+                    except ValueError:
+                        raise LoadError('expires_at_seconds must be a number')
+                    if not rs == token_set['resource_server']:
+                        raise LoadError('Resource server does not match')
             login_group.sort(
                 key=lambda tgroup: self._get_newest_token(tgroup),
                 reverse=True
