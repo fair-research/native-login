@@ -111,35 +111,57 @@ class NativeClient(object):
         :return: tokens by resource server, or an exception if that fails
         """
         if self.token_storage is not None:
-            return self.token_storage.read_tokens()
+            return self.token_storage.read_tokens() or {}
         raise LoadError('No token_storage set on client.')
 
     def load_tokens(self, requested_scopes=None):
         """
         Load tokens from the set token_storage object if one exists.
         :param requested_scopes: Check that the loaded scopes match these
-        requested scopes. Raises ScopesMismatch if there is a discrepancy.
+        requested scopes. Raises ScopesMismatch if a requested token does not
+        exist.
         :return: Loaded tokens, or a LoadError if loading fails.
         """
         tokens = self._load_raw_tokens()
 
-        if requested_scopes is not None and isinstance(requested_scopes, str):
-            requested_scopes = requested_scopes.split(' ')
-
         if not tokens:
             raise LoadError('No Tokens loaded')
 
-        if requested_scopes not in [None, ()]:
+        if requested_scopes is not None:
+            # Support both string and list for requested scope. But ensure
+            # it is a list.
+            if isinstance(requested_scopes, str):
+                requested_scopes = requested_scopes.split(' ')
+            requested_scopes = set(requested_scopes)
+            # Ensure only requested tokens are used.
+            tokens = {rs: ts for rs, ts in tokens.items()
+                      if requested_scopes.intersection(ts['scope'].split())}
+            # Ensure all requested tokens are present.
             check_scopes(tokens, requested_scopes)
+
         try:
             check_expired(tokens)
         except TokensExpired as te:
             expired = {rs: tokens[rs] for rs in te.resource_servers}
-            if not self._refreshable(expired):
+            # If the user requested scopes, one of their scopes expired by this
+            # point and we need to let them know.
+            if requested_scopes is not None:
                 raise
-            tokens.update(self.refresh_tokens(expired))
-            self.save_tokens(tokens)
+            # At this point, scopes expired but either were refreshable, or
+            # the user didn't specify.
+            refreshed = self.refresh_tokens(self.get_refreshable(expired))
+            self.save_tokens(refreshed)
+            unexpired = {rs: ts for rs, ts in tokens.items()
+                         if rs not in expired}
+            unexpired.update(refreshed)
+            tokens = unexpired
+            if not tokens:
+                raise
+
         return tokens
+
+    def get_refreshable(self, tokens):
+        return {t: ts for t, ts in tokens.items() if bool(ts['refresh_token'])}
 
     def _refreshable(self, tokens):
         return all([bool(ts['refresh_token']) for ts in tokens.values()])

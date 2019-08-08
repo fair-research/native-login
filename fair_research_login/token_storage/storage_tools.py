@@ -12,15 +12,20 @@ def check_expired(tokens):
         raise TokensExpired(resource_servers=expired)
 
 
-def check_scopes(tokens, requested_scopes):
+def get_scopes(tokens):
+    """Fetch scopes for tokens given a dict of tokens grouped by resource
+    server. """
     scopes = [tset['scope'].split() for tset in tokens.values()]
     # Get flattened list of scopes
-    loaded_scopes = [item for sublist in scopes for item in sublist]
-    if not set(requested_scopes).issubset(set(loaded_scopes)):
-        raise ScopesMismatch('Requested Scopes do not match loaded'
-                             ' Scopes for Globus Auth. \nRequested: {}\n'
-                             'Loaded: {}'.format(set(requested_scopes),
-                                                 set(loaded_scopes)))
+    return [item for sublist in scopes for item in sublist]
+
+
+def check_scopes(tokens, requested_scopes):
+    loaded_scopes = get_scopes(tokens)
+    diff = set(requested_scopes).difference(set(loaded_scopes))
+    if diff:
+        raise ScopesMismatch('Loaded Scopes missing Requested Scopes {}'
+                             ''.format(diff))
 
 
 def default_name_key(group_key, key):
