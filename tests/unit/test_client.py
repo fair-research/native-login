@@ -68,6 +68,53 @@ def test_load_no_tokens_raises_error(mem_storage):
         cli.load_tokens()
 
 
+def test_save_tokens(mem_storage, mock_tokens):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    mem_storage.tokens = {}
+    cli.save_tokens(mock_tokens)
+    assert mem_storage.tokens == mock_tokens
+
+
+def test_save_new_tokens(mem_storage, mock_tokens):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    mem_storage.tokens = {}
+    ts1 = {'auth.globus.org': mock_tokens['auth.globus.org']}
+    ts2 = {'transfer.api.globus.org': mock_tokens['transfer.api.globus.org']}
+    cli.save_tokens(ts1)
+    cli.save_tokens(ts2)
+    expected = ['auth.globus.org', 'transfer.api.globus.org']
+    assert list(mem_storage.tokens.keys()) == expected
+
+
+def test_save_overwrite_scope(mem_storage, mock_tokens):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    mem_storage.tokens = {}
+    ts1 = {'auth.globus.org': mock_tokens['auth.globus.org']}
+    ts2 = {'auth.globus.org': ts1['auth.globus.org'].copy()}
+    ts2['auth.globus.org']['scope'] = 'openid profile'
+    # A new scope will come with new access tokens, so ensure those change too
+    ts2['auth.globus.org']['access_token'] = 'new_acc'
+    ts2['auth.globus.org']['refresh_token'] = 'new_ref'
+    cli.save_tokens(ts1)
+    cli.save_tokens(ts2)
+    assert mem_storage.tokens['auth.globus.org']['scope'] == 'openid profile'
+    assert mem_storage.tokens['auth.globus.org']['access_token'] == 'new_acc'
+    assert mem_storage.tokens['auth.globus.org']['refresh_token'] == 'new_ref'
+
+
+def test_save_overwrite_tokens(mem_storage, mock_tokens):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    mem_storage.tokens = {}
+    ts1 = {'auth.globus.org': mock_tokens['auth.globus.org']}
+    ts2 = {'auth.globus.org': ts1['auth.globus.org'].copy()}
+    ts2['auth.globus.org']['access_token'] = 'new_acc'
+    ts2['auth.globus.org']['refresh_token'] = 'new_ref'
+    cli.save_tokens(ts1)
+    cli.save_tokens(ts2)
+    assert mem_storage.tokens['auth.globus.org']['access_token'] == 'new_acc'
+    assert mem_storage.tokens['auth.globus.org']['refresh_token'] == 'new_ref'
+
+
 def test_client_token_calls_with_no_storage_raise_error(mock_tokens):
     cli = NativeClient(client_id=str(uuid4()), token_storage=None)
     with pytest.raises(LoadError):
@@ -206,3 +253,20 @@ def test_client_when_cannot_refresh(mock_expired_tokens, mem_storage,
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     with pytest.raises(TokensExpired):
         cli.load_tokens()
+
+
+def test_non_requested_token_does_not_cancel_load(mem_storage, mock_tokens,
+                                                  mock_expired_tokens):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    good = ['openid', 'profile',
+            'urn:globus:auth:scope:transfer.api.globus.org:all']
+    exp = 'custom_scope'
+    exprs = 'resource.server.org'
+    mem_storage.tokens = mock_tokens
+    mem_storage.tokens[exprs] = mock_expired_tokens[exprs]
+
+    # should not raise
+    cli.load_tokens(requested_scopes=good)
+    cli.load_tokens()
+    with pytest.raises(TokensExpired):
+        cli.load_tokens(requested_scopes=exp)

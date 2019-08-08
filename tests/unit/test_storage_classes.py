@@ -28,6 +28,8 @@ def test_json_token_storage(mock_tokens, mock_revoke, monkeypatch):
     monkeypatch.setattr(os.path, 'exists', lambda x: True)
     mo = mock_open()
     with patch(BUILTIN_OPEN, mo):
+        from pprint import pprint
+        pprint(mock_tokens)
         cli.save_tokens(mock_tokens)
         written = ''.join([c[1][0] for c in mo().write.mock_calls])
     with patch(BUILTIN_OPEN, mock_open(read_data=written)):
