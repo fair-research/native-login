@@ -1,5 +1,6 @@
 from globus_sdk import (NativeAppAuthClient, RefreshTokenAuthorizer,
                         AccessTokenAuthorizer)
+import globus_sdk.exc
 
 from fair_research_login.code_handler import InputCodeHandler
 from fair_research_login.local_server import LocalServerCodeHandler
@@ -155,9 +156,14 @@ class NativeClient(object):
                 access_token=token_dict['access_token'],
                 expires_at=token_dict['expires_at_seconds'],
             )
-            authorizer.check_expiration_time()
-            token_dict['access_token'] = authorizer.access_token
-            token_dict['expires_at_seconds'] = authorizer.expires_at
+            try:
+                authorizer.check_expiration_time()
+                token_dict['access_token'] = authorizer.access_token
+                token_dict['expires_at_seconds'] = authorizer.expires_at
+            except globus_sdk.exc.AuthAPIError as aapie:
+                if aapie.message == 'invalid_grant':
+                    raise TokensExpired('Refresh Token Expired: ',
+                                        resource_servers=[rs])
         return tokens
 
     def get_authorizers(self, requested_scopes=None):
