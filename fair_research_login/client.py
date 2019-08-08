@@ -102,7 +102,12 @@ class NativeClient(object):
         :return: None
         """
         if self.token_storage is not None:
-            return self.token_storage.write_tokens(tokens)
+            original_tks = self._load_raw_tokens()
+            for rs, ts in tokens.items():
+                # Set it if it doesn't exist
+                if original_tks.get(rs) != ts:
+                    original_tks[rs] = ts
+            return self.token_storage.write_tokens(original_tks)
         raise LoadError('No token_storage set on client.')
 
     def _load_raw_tokens(self):
