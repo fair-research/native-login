@@ -14,12 +14,13 @@ def check_expired(tokens):
 
 def check_scopes(tokens, requested_scopes):
     scopes = [tset['scope'].split() for tset in tokens.values()]
-    flat_list = [item for sublist in scopes for item in sublist]
-    if set(flat_list) != set(requested_scopes):
+    # Get flattened list of scopes
+    loaded_scopes = [item for sublist in scopes for item in sublist]
+    if not set(requested_scopes).issubset(set(loaded_scopes)):
         raise ScopesMismatch('Requested Scopes do not match loaded'
-                             ' Scopes for Globus Auth. \nCurrent: {}\n'
-                             'Requested: {}'.format(set(flat_list),
-                                                    set(requested_scopes)))
+                             ' Scopes for Globus Auth. \nRequested: {}\n'
+                             'Loaded: {}'.format(set(requested_scopes),
+                                                 set(loaded_scopes)))
 
 
 def default_name_key(group_key, key):

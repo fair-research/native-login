@@ -32,9 +32,13 @@ def test_check_scopes_with_valid_scopes(mock_tokens):
     assert check_scopes(mock_tokens, scopes) is None
 
 
-def test_check_scopes_with_differing_scopes(mock_tokens):
+def test_check_scopes_with_never_requested_scope(mock_tokens):
     with pytest.raises(ScopesMismatch):
-        check_scopes(mock_tokens, ['custom_scope'])
+        check_scopes(mock_tokens, ['never_requested'])
+
+
+def test_check_scopes_with_differing_scope(mock_tokens):
+    assert check_scopes(mock_tokens, ['custom_scope']) is None
 
 
 def test_flat_pack_unpack(mock_tokens):
