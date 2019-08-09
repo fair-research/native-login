@@ -48,16 +48,18 @@ def mock_tokens_underscores():
 
 @pytest.fixture
 def mock_expired_tokens(mock_tokens):
-    for tset in mock_tokens.values():
+    tokens = deepcopy(mock_tokens)
+    for tset in tokens.values():
         tset['expires_at_seconds'] = 0
-    return mock_tokens
+    return tokens
 
 
 @pytest.fixture
 def expired_tokens_with_refresh(mock_expired_tokens):
-    for tset in mock_expired_tokens.values():
+    tokens = deepcopy(mock_expired_tokens)
+    for tset in tokens.values():
         tset['refresh_token'] = '<Mock Refresh Token>'
-    return mock_expired_tokens
+    return tokens
 
 
 @pytest.fixture

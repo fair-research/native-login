@@ -20,7 +20,9 @@ class JSONTokenStorage(object):
         if not os.path.exists(self.filename):
             return None
         with open(self.filename) as fh:
-            return json.load(fh)
+            content = fh.read()
+            if content:
+                return json.loads(content)
 
     def clear_tokens(self):
         os.remove(self.filename)
