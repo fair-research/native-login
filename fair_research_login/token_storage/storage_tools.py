@@ -1,13 +1,20 @@
 import time
 
-from fair_research_login.exc import TokensExpired, ScopesMismatch
+from fair_research_login.exc import (TokensExpired, ScopesMismatch,
+                                     InvalidTokenFormat)
+
+TOKEN_GROUP_KEYS = {'access_token', 'refresh_token', 'expires_at_seconds',
+                    'scope', 'token_type', 'resource_server'}
+REQUIRED_TOKEN_KEYS = {'access_token', 'expires_at_seconds', 'scope',
+                       'resource_server'}
+
+
+def is_expired(token_set):
+    return time.time() >= token_set['expires_at_seconds']
 
 
 def check_expired(tokens):
-    expired = [
-        rs for rs, tset in tokens.items()
-        if time.time() >= tset['expires_at_seconds']
-    ]
+    expired = [rs for rs, tset in tokens.items() if is_expired(tset)]
     if expired:
         raise TokensExpired(resource_servers=expired)
 
@@ -26,6 +33,75 @@ def check_scopes(tokens, requested_scopes):
     if diff:
         raise ScopesMismatch('Loaded Scopes missing Requested Scopes {}'
                              ''.format(diff))
+
+
+def verify_token_group(tokens):
+    """Verifies a token group is a valid dict with valid values. Does NOT check
+    whether the token has expired or if the token(s) are invalid. Validation
+    is not absolutely strict and allows some deviance for values, for example
+    'refresh_token' may be any falsy value. If validation passes, a cleaned
+     dict is returned with the following values:
+
+    * access_token: A string
+    * refresh_token: A valid string or None
+    * scope: A string
+    * expires_at_seconds: An integer
+    * token_type: 'Bearer'
+
+    The following validation asserts the following:
+
+    * tokens is a dict
+    * tokens contains no more than the following:
+     {'access_token', 'refresh_token', 'expires_at_seconds',
+     'scope', 'token_type', 'resource_server'}
+    * The token group contains no less than the following:
+     {'access_token', 'expires_at_seconds', 'scope', 'resource_server'}
+    * 'access_token' and 'scope' must be strings
+    * 'token_type' is 'Bearer' if it is present
+    * 'refresh_token' must be falsy or a string.
+    * 'expires_at_seconds' must be an integer or parsable integer
+        * valid examples include: 123, '123', 123.456
+        * invalid examples include: 'abc', '123abc'
+
+    """
+    cleaned = tokens.copy()
+
+    if not isinstance(tokens, dict):
+        raise InvalidTokenFormat('Tokens must be a dict.', code='not_dict')
+    tk_set = set(tokens.keys())
+
+    if not tk_set.issubset(TOKEN_GROUP_KEYS):
+        raise InvalidTokenFormat('Received unexpected values: {}'.format(
+            tk_set.difference(TOKEN_GROUP_KEYS)), code='unexpected_values')
+
+    if not tk_set.issuperset(REQUIRED_TOKEN_KEYS):
+        raise InvalidTokenFormat('Missing required values: {}'.format(
+            REQUIRED_TOKEN_KEYS.difference(tk_set), code='missing_required'
+        ))
+
+    for tp in ['access_token', 'scope', 'resource_server']:
+        if not isinstance(tokens.get(tp, ''), str):
+            raise InvalidTokenFormat('{} must be a string.'.format(tp),
+                                     code='invalid_type')
+        cleaned[tp] = tokens[tp]
+
+    if tokens.get('token_type') and tokens['token_type'] != 'Bearer':
+        raise InvalidTokenFormat('token_type must be "Bearer"',
+                                 code='invalid_token_type')
+    cleaned['token_type'] = 'Bearer'
+
+    rt = tokens.get('refresh_token')
+    if rt and not isinstance(rt, str):
+        raise InvalidTokenFormat('refresh_token must be a str or falsy',
+                                 code='invalid_type')
+    cleaned['refresh_token'] = rt or None
+
+    try:
+        cleaned['expires_at_seconds'] = int(tokens['expires_at_seconds'])
+    except ValueError:
+        raise InvalidTokenFormat('expires_at_seconds must be an integer',
+                                 code='invalid_type')
+    return cleaned
 
 
 def default_name_key(group_key, key):

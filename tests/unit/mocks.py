@@ -4,6 +4,8 @@ import os
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), 'data')
 CONFIGPARSER_VALID_CFG = os.path.join(DATA_PATH, 'configparser_valid.cfg')
+VALID_TOKENS_FILE = os.path.join(DATA_PATH, 'valid_tokens.json')
+INVALID_TOKENS_FILE = os.path.join(DATA_PATH, 'invalid_tokens.json')
 
 DEFAULT_EXPIRE = int(time.time()) + 60 * 60 * 48
 
