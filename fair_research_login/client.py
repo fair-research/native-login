@@ -153,7 +153,7 @@ class NativeClient(object):
         if not tokens:
             raise LoadError('No Tokens loaded')
 
-        if requested_scopes is not None:
+        if requested_scopes:
             # Support both string and list for requested scope. But ensure
             # it is a list.
             if isinstance(requested_scopes, str):
@@ -171,7 +171,7 @@ class NativeClient(object):
             expired = {rs: tokens[rs] for rs in te.resource_servers}
             # If the user requested scopes, one of their scopes expired by this
             # point and we need to let them know.
-            if requested_scopes is not None:
+            if requested_scopes:
                 raise
             # At this point, scopes expired but either were refreshable, or
             # the user didn't specify.
