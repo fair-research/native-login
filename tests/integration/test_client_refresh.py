@@ -17,6 +17,7 @@ def test_refresh(live_client):
     tokens = live_client.login(refresh_tokens=True)
     for tset in tokens.values():
         tset['expires_at_seconds'] = 0
+        tset['access_token'] = 'foo'
     live_client.save_tokens(tokens)
     for rs, new_tokens in live_client.load_tokens().items():
         assert tokens[rs]['access_token'] != new_tokens['access_token']
@@ -54,6 +55,8 @@ def test_refresh_no_longer_works_after_logout(live_client_destructive):
 def test_load_live_token_when_another_inactive(live_client_destructive):
     tokens = live_client_destructive.login()
     tokens['auth.globus.org']['expires_at_seconds'] = 0
+    tokens['auth.globus.org']['access_token'] = 'fooey!'
+
     live_client_destructive.save_tokens(tokens)
     new_scope = ['urn:globus:auth:scope:transfer.api.globus.org:all']
     live_client_destructive.login(requested_scopes=new_scope)
