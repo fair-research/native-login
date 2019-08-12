@@ -14,12 +14,74 @@ from fair_research_login.exc import (
 
 
 class NativeClient(object):
-    """
+    r"""
     The Native Client serves as another small layer on top of the Globus SDK
     to automatically handle token storage and provide a customizable
     Local Server. It can be used both by simple scripts to simplify the
     auth flow, or by full command line clients that may extend various pieces
     and tailor them to its own needs.
+    **Parameters**
+        ``client_id`` (*string*)
+          The id for your app. Register one at https://developers.globus.org
+        ``app_name`` (*string*)
+          The name of your app. Shows up on the named grant during consent,
+          and the local server browser page by default. It is also propogated
+          to globus_sdk.NativeAppAuthClient.
+        ``default_scopes`` (*list*)
+          A list of scopes which will serve as the default to login() if
+          login is called with no requested_scopes parameter.
+          Example:
+          ['openid', 'profile', 'email']
+        ``token_storage`` (*object*)
+          Any object capable of reading/writing/clearing tokens from/to disk.
+          The object must define these three methods: read_tokens(),
+          write_tokens(tokens), and clear_tokens(), where ``tokens`` is a list
+          of login groups (dicts), each of which contains a token group (dict)
+          keyed by resource server.
+
+          Example ``tokens``:
+          [{
+            'auth.globus.org': {
+                'scope': 'openid profile email',
+                'access_token': '<token>',
+                'refresh_token': None,
+                'token_type': 'Bearer',
+                'expires_at_seconds': 1234567,
+                'resource_server': 'auth.globus.org'
+            }
+          }]
+
+          A default token storage object is provided
+          at fair_research_login.token_storage.MultiClientTokenStorage, which
+          saves tokens in a section named by your clients ``client_id``. None
+          may be used to disable token storage.
+        ``local_server_code_handler`` (:class:`CodeHandler \
+          <fair_research_login.code_handler.CodeHandler>`)
+          A Local Code handler capable of fetching and returning the
+          authorization code generated as a browser query param in Globus Auth
+          Used during login(), but can be disabled with
+          login(no_local_server=True)
+        ``secondary_code_handler`` (:class:`CodeHandler \
+          <fair_research_login.code_handler.CodeHandler>`)
+          Handler to be used if the ``local_server_code_handler`` has been
+          disabled.
+
+    ** Methods **
+
+    *  :py:meth:`.login`
+    *  :py:meth:`.logout`
+    *  :py:meth:`.load_tokens`
+    *  :py:meth:`.get_authorizers`
+    *  :py:meth:`.revoke_token_set`
+    *  :py:meth:`.are_refreshable`
+    *  :py:meth:`.check_scopes`
+    *  :py:meth:`.get_scope_set`
+    *  :py:meth:`.refresh_tokens`
+
+    ** Example **
+
+    cli = NativeClient(client_id='my_id', app_name='my cool app')
+    cli.login(requested_scopes=['openid', 'profile', 'email'])
     """
 
     TOKEN_STORAGE_ATTRS = {'write_tokens', 'read_tokens', 'clear_tokens'}
@@ -44,23 +106,36 @@ class NativeClient(object):
     def login(self, no_local_server=False, no_browser=False,
               requested_scopes=(), refresh_tokens=None,
               prefill_named_grant=None, additional_params=None, force=False):
-        """
+        r"""
         Do a Native App Auth Flow to get tokens for requested scopes. This
         first attempts to load tokens and will simply return those if they are
         valid, and will automatically attempt to save tokens on login success
         (token_storage must be set for automatic load/save functionality).
-        :param no_local_server: Don't use the local server. This may be because
-        of permissions issues of standing up a server on the clients machine.
-        :param no_browser: Don't automatically open a browser, and instead
-        instruct the user to manually follow the URL to login. This is useful
-        on remote servers which don't have native browsers for clients to use.
-        :param requested_scopes: Globus Scopes to request on the users behalf.
-        :param refresh_tokens: Use refresh tokens to extend login time
-        :param prefill_named_grant: Named Grant to use on Consent Page
-        :param additional_params: Additional Params to supply, such as for
-        using Globus Sessions
-        :param force: Force a login flow, even if loaded tokens are valid.
-        :return:
+        See ``load_tokens`` for how it handles requested_scopes.
+        **Parameters**
+        ``no_local_server`` (*bool*)
+          Disable spinning up a local server to automatically copy-paste the
+          auth code. THIS IS REQUIRED if you are on a remote server, as this
+          package isn't able to determine the domain of a remote service. When
+          used locally with no_local_server=False, the domain is localhost with
+          a randomly chosen open port number.
+        ``no_browser`` (*string*)
+          Do not automatically open the browser for the Globus Auth URL.
+          Display the URL instead and let the user navigate to that location.
+        ``requested_scopes`` (*list*)
+          A list of scopes to request of Globus Auth during login.
+          Example:
+          ['openid', 'profile', 'email']
+        ``refresh_tokens`` (*bool*)
+          Ask for Globus Refresh Tokens to extend login time.
+        ``prefill_named_grant`` (*bool*)
+          Use a custom named grant on the consent page
+        ``additional_params`` (*dict*)
+          Additional Params used in constructing the authorize URL for Globus
+          Auth. Used for requesting additional features such as for using
+          Globus Sessions.
+        ``force`` (*bool*)
+          Force a login flow, even if loaded tokens are valid.
         """
         if force is False:
             try:
@@ -92,17 +167,34 @@ class NativeClient(object):
         return token_response.by_resource_server
 
     def verify_token_storage(self, obj):
+        """
+        Internal. Verify object passed for token_storage is valid.
+        """
         for attr in self.TOKEN_STORAGE_ATTRS:
             if getattr(obj, attr, None) is None:
                 raise AttributeError('token_storage requires object "{}" to '
                                      'have the {} attribute'.format(obj, attr))
 
     def save_tokens(self, tokens):
-        """
+        r"""
         Save tokens if token_storage is set. Typically this is called
-        automatically in a successful login().
-        :param tokens: globus_sdk.auth.token_response.OAuthTokenResponse.
-        :return: None
+        automatically in a successful login(). Returns a value from the
+        token_storage backend.
+        **Parameters**
+        ``tokens`` (**list**)
+          A dict of token dicts, each containing a dict defined by
+            globus_sdk.auth.token_response.OAuthTokenResponse\
+            .by_resource_server.
+        **Example**
+          {"auth.globus.org": {
+                "scope": "profile openid email",
+                "access_token": "<token>",
+                "refresh_token": None,
+                "token_type": "Bearer",
+                "expires_at_seconds": 1539984535,
+                "resource_server": "auth.globus.org"
+            }, ...
+          }
         """
         if self.token_storage is None:
             raise TokenStorageDisabled()
@@ -134,8 +226,8 @@ class NativeClient(object):
 
     def _load_raw_tokens(self):
         """
-        Loads tokens without checking them
-        :return: tokens by resource server, or an exception if that fails
+        Loads tokens without checking whether they have expired. Sorts them by
+        expiration time.
         """
         if self.token_storage is not None:
             return self.token_storage.read_tokens() or {}
@@ -143,11 +235,30 @@ class NativeClient(object):
 
     def load_tokens(self, requested_scopes=None):
         """
-        Load tokens from the set token_storage object if one exists.
-        :param requested_scopes: Check that the loaded scopes match these
-        requested scopes. Raises ScopesMismatch if a requested token does not
-        exist.
-        :return: Loaded tokens, or a LoadError if loading fails.
+        Load saved tokens and return them keyed by resource server. If no
+        requested_scopes are requested, will attempt to return all active
+        tokens, automatically refreshing expired tokens where possible.
+
+        If requested_scopes are provided, load_tokens will guarantee only those
+        scopes are returned and that the tokens have not expired (Note: Tokens
+        can still be invalid if the user rescind consent). If the tokens have
+        expired, a TokensExpired exception is raised. If loaded scopes do
+        not contain requested_scopes, a ScopesMismatch exception is raised.
+        **Parameters**
+        ``requested_scopes`` (**iterable**)
+          A dict of token dicts, each containing a dict defined by
+            globus_sdk.auth.token_response.OAuthTokenResponse\
+            .by_resource_server.
+        **Example**
+          {"auth.globus.org": {
+                "scope": "profile openid email",
+                "access_token": "<token>",
+                "refresh_token": None,
+                "token_type": "Bearer",
+                "expires_at_seconds": 1539984535,
+                "resource_server": "auth.globus.org"
+            }, ...
+          }
         """
         tokens = {rs: verify_token_group(ts) for rs, ts in
                   self._load_raw_tokens().items()}
@@ -209,6 +320,9 @@ class NativeClient(object):
         return token_group
 
     def refresh_tokens(self, tokens):
+        """
+        Explicitly refresh a token. Called automatically by load_tokens().
+        """
         if not self._refreshable(tokens):
             raise TokensExpired('No Refresh Token, cannot refresh tokens: ',
                                 resource_servers=tokens.keys())
@@ -256,6 +370,18 @@ class NativeClient(object):
             return AccessTokenAuthorizer(token_dict['access_token'])
 
     def get_authorizers(self, requested_scopes=None):
+        """
+        Load tokens and create TokenAuthorizers for them. Automatically
+        creates a globus_sdk.RefreshTokenAuthorizer if possible, otherwise an
+        globus_sdk.AccessTokenAuthorizer. Authorizers are organized by resource
+        server. Raises a fair_research_login.exc.LoadError if Token Storage
+        is disabled, no tokens were saved, or if the tokens expired or the
+        requested scopes don't match. Calls load_tokens() internally.
+        **Parameters**
+        ``requested_scopes`` (*list*)
+          A list of scopes. Example:
+          ['openid', 'profile', 'email']
+        """
         tokens = self.load_tokens(requested_scopes=requested_scopes)
         return {rs: self.get_authorizer(ts) for rs, ts in tokens.items()}
 
@@ -275,12 +401,34 @@ class NativeClient(object):
 
     def logout(self):
         """
-        Revoke saved tokens and clear them from storage
+        Revoke saved tokens and clear them from storage. Raises
+        fair_research_login.exc.TokenStorageDisabled if no token storage is
+        set, otherwise attempts to revoke tokens then returns None.
+
+        Clients NOT using token storage should use 'revoke_token_set' instead
+        to revoke tokens.
         """
         self.revoke_token_set(self._load_raw_tokens())
         self.token_storage.clear_tokens()
 
     def revoke_token_set(self, tokens):
+        """
+        Revoke Tokens for a given token group.
+        **parameters**
+          ``tokens`` (*dict*)
+          An object matching
+          globus_sdk.auth.token_response.OAuthTokenResponse.by_resource_server
+
+          Expected Example Format:
+            {"auth.globus.org": {
+                "scope": "profile openid email",
+                "access_token": "<token>",
+                "refresh_token": None,
+                "token_type": "Bearer",
+                "expires_at_seconds": 1539984535,
+                "resource_server": "auth.globus.org"
+            },
+        """
         for rs, tok_set in tokens.items():
             self.client.oauth2_revoke_token(tok_set.get('access_token'))
             self.client.oauth2_revoke_token(tok_set.get('refresh_token'))
