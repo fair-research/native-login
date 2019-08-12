@@ -5,7 +5,7 @@ import sys
 from fair_research_login.exc import (TokensExpired, ScopesMismatch,
                                      InvalidTokenFormat)
 
-string_types = str if sys.version_info.major == 3 else basestring
+string_types = str if sys.version_info.major == 3 else basestring  # noqa
 
 TOKEN_GROUP_KEYS = {'access_token', 'refresh_token', 'expires_at_seconds',
                     'scope', 'token_type', 'resource_server'}

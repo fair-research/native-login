@@ -82,8 +82,8 @@ def test_save_new_tokens(mem_storage, mock_tokens):
     ts2 = {'transfer.api.globus.org': mock_tokens['transfer.api.globus.org']}
     cli.save_tokens(ts1)
     cli.save_tokens(ts2)
-    expected = ['auth.globus.org', 'transfer.api.globus.org']
-    assert list(mem_storage.tokens.keys()) == expected
+    expected = {'auth.globus.org', 'transfer.api.globus.org'}
+    assert set(mem_storage.tokens.keys()) == expected
 
 
 def test_save_overwrite_scope(mem_storage, mock_tokens, mock_revoke):
