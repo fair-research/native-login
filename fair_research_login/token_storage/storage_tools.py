@@ -1,7 +1,11 @@
 import time
+import copy
+import sys
 
 from fair_research_login.exc import (TokensExpired, ScopesMismatch,
                                      InvalidTokenFormat)
+
+string_types = str if sys.version_info.major == 3 else basestring
 
 TOKEN_GROUP_KEYS = {'access_token', 'refresh_token', 'expires_at_seconds',
                     'scope', 'token_type', 'resource_server'}
@@ -64,7 +68,7 @@ def verify_token_group(tokens):
         * invalid examples include: 'abc', '123abc'
 
     """
-    cleaned = tokens.copy()
+    cleaned = copy.deepcopy(tokens)
 
     if not isinstance(tokens, dict):
         raise InvalidTokenFormat('Tokens must be a dict.', code='not_dict')
@@ -80,7 +84,7 @@ def verify_token_group(tokens):
         ))
 
     for tp in ['access_token', 'scope', 'resource_server']:
-        if not isinstance(tokens.get(tp, ''), str):
+        if not isinstance(tokens.get(tp, ''), string_types):
             raise InvalidTokenFormat('{} must be a string.'.format(tp),
                                      code='invalid_type')
         cleaned[tp] = tokens[tp]
@@ -91,7 +95,7 @@ def verify_token_group(tokens):
     cleaned['token_type'] = 'Bearer'
 
     rt = tokens.get('refresh_token')
-    if rt and not isinstance(rt, str):
+    if rt and not isinstance(rt, string_types):
         raise InvalidTokenFormat('refresh_token must be a str or falsy',
                                  code='invalid_type')
     cleaned['refresh_token'] = rt or None
