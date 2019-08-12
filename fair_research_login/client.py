@@ -6,9 +6,11 @@ from fair_research_login.code_handler import InputCodeHandler
 from fair_research_login.local_server import LocalServerCodeHandler
 from fair_research_login.token_storage import (
     MultiClientTokenStorage, check_expired, check_scopes, is_expired,
-    verify_token_group, TOKEN_GROUP_KEYS
+    verify_token_group, TOKEN_GROUP_KEYS, get_scopes
 )
-from fair_research_login.exc import LoadError, TokensExpired
+from fair_research_login.exc import (
+    LoadError, TokensExpired, TokenStorageDisabled, NoSavedTokens
+)
 
 
 class NativeClient(object):
@@ -103,7 +105,7 @@ class NativeClient(object):
         :return: None
         """
         if self.token_storage is None:
-            raise LoadError('No token_storage set on client.')
+            raise TokenStorageDisabled()
 
         tokens = {rs: verify_token_group(ts) for rs, ts in tokens.items()}
         original_tks = self._load_raw_tokens()
@@ -137,7 +139,7 @@ class NativeClient(object):
         """
         if self.token_storage is not None:
             return self.token_storage.read_tokens() or {}
-        raise LoadError('No token_storage set on client.')
+        raise TokenStorageDisabled('No token_storage set on client.')
 
     def load_tokens(self, requested_scopes=None):
         """
@@ -151,7 +153,7 @@ class NativeClient(object):
                   self._load_raw_tokens().items()}
 
         if not tokens:
-            raise LoadError('No Tokens loaded')
+            raise NoSavedTokens('No tokens were loaded')
 
         if requested_scopes:
             # Support both string and list for requested scope. But ensure
@@ -192,6 +194,20 @@ class NativeClient(object):
     def _refreshable(self, tokens):
         return all([bool(ts['refresh_token']) for ts in tokens.values()])
 
+    def load_tokens_by_scope(self, requested_scopes=None):
+        """Like load_tokens(), but returns a dict keyed by token scopes
+        instead of by resource server. If there are multiple scopes requested
+        for the same token (such as ['openid', 'profile', 'email']), each
+        scope will have a duplicate copy of the same information.
+        """
+        tokens = self.load_tokens(requested_scopes)
+        token_group = {}
+        for scope in get_scopes(tokens):
+            for tgroup in tokens.values():
+                if scope in tgroup['scope'].split():
+                    token_group[scope] = tgroup
+        return token_group
+
     def refresh_tokens(self, tokens):
         if not self._refreshable(tokens):
             raise TokensExpired('No Refresh Token, cannot refresh tokens: ',
@@ -214,23 +230,43 @@ class NativeClient(object):
                                         resource_servers=[rs])
         return tokens
 
+    def get_authorizer(self, token_dict):
+        """
+        Create an authorizer for a given dict of tokens. Returns a
+        globus_sdk.RefreshTokenAuthorizer if there is a refresh token, else
+        a globus_sdk.AccessTokenAuthorizer. Tokens are not checked for
+        expiration or validity.
+        Example token dict would produce a RefreshTokenAuthorizer
+         {
+                "scope": "profile openid email",
+                "access_token": "<token>",
+                "refresh_token": <token>,
+                "expires_at_seconds": 1539984535,
+         }
+        """
+        if token_dict.get('refresh_token') is not None:
+            return RefreshTokenAuthorizer(
+                token_dict['refresh_token'],
+                self.client,
+                access_token=token_dict['access_token'],
+                expires_at=token_dict['expires_at_seconds'],
+                on_refresh=self.on_refresh,
+            )
+        else:
+            return AccessTokenAuthorizer(token_dict['access_token'])
+
     def get_authorizers(self, requested_scopes=None):
         tokens = self.load_tokens(requested_scopes=requested_scopes)
-        authorizers = {}
-        for resource_server, token_dict in tokens.items():
-            if token_dict.get('refresh_token') is not None:
-                authorizers[resource_server] = RefreshTokenAuthorizer(
-                    token_dict['refresh_token'],
-                    self.client,
-                    access_token=token_dict['access_token'],
-                    expires_at=token_dict['expires_at_seconds'],
-                    on_refresh=self.on_refresh,
-                )
-            else:
-                authorizers[resource_server] = AccessTokenAuthorizer(
-                    token_dict['access_token']
-                )
-        return authorizers
+        return {rs: self.get_authorizer(ts) for rs, ts in tokens.items()}
+
+    def get_authorizers_by_scope(self, requested_scopes=None):
+        """
+        Like get_authorizers(), but returns a dict keyed by scope rather than
+        by resource server.
+        """
+        tokens = self.load_tokens_by_scope(requested_scopes)
+        return {scope: self.get_authorizer(tokens)
+                for scope, tokens in tokens.items()}
 
     def on_refresh(self, token_response):
         loaded_tokens = self._load_raw_tokens()

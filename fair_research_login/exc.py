@@ -22,6 +22,15 @@ class LoadError(LoginException):
     pass
 
 
+class TokenStorageDisabled(LoadError):
+    pass
+
+
+class NoSavedTokens(LoadError):
+    """There were no saved tokens to load"""
+    pass
+
+
 class ScopesMismatch(LoadError):
     """
     Requested scopes do not match loaded scopes

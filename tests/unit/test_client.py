@@ -62,6 +62,17 @@ def test_load_tokens(mem_storage, mock_tokens):
     assert cli.load_tokens() == mock_tokens
 
 
+def test_load_tokens_by_scope(mem_storage, mock_tokens):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    mem_storage.tokens = mock_tokens
+    tokens = cli.load_tokens_by_scope()
+    assert len(tokens) == 5
+    assert set(tokens.keys()) == {
+        'openid', 'profile', 'email', 'custom_scope',
+        'urn:globus:auth:scope:transfer.api.globus.org:all'
+    }
+
+
 def test_load_no_tokens_raises_error(mem_storage):
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     with pytest.raises(LoadError):
@@ -235,6 +246,21 @@ def test_client_get_authorizers(mock_tokens,
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     for rs, authorizer in cli.get_authorizers().items():
         if rs == 'resource.server.org':
+            assert isinstance(authorizer, RefreshTokenAuthorizer)
+        else:
+            assert isinstance(authorizer, AccessTokenAuthorizer)
+
+
+def test_client_get_authorizers_by_scope(mock_tokens,
+                                         mock_refresh_token_authorizer,
+                                         mem_storage):
+    mock_tokens['resource.server.org']['refresh_token'] = '<Refresh Token>'
+    mem_storage.tokens = mock_tokens
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    by_scope = cli.get_authorizers_by_scope()
+    assert len(by_scope) == 5
+    for scope, authorizer in by_scope.items():
+        if scope == 'custom_scope':
             assert isinstance(authorizer, RefreshTokenAuthorizer)
         else:
             assert isinstance(authorizer, AccessTokenAuthorizer)
