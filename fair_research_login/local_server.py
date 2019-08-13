@@ -186,7 +186,10 @@ class RedirectHTTPServer(HTTPServer, object):
         # relevant Python issue discussing this behavior:
         # https://bugs.python.org/issue1360
         try:
-            return self._auth_code_queue.get(block=True, timeout=self.timeout)
+            resp = self._auth_code_queue.get(block=True, timeout=self.timeout)
+            if isinstance(resp, LocalServerError):
+                raise resp
+            return resp
         except queue.Empty:
             raise LocalServerError()
         finally:
