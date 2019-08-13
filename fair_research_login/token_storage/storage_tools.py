@@ -18,6 +18,12 @@ def is_expired(token_set):
 
 
 def check_expired(tokens):
+    """
+    Returns a Token Group organized by:
+    globus_sdk.auth.token_response.OAuthTokenResponse.by_resource_server
+    For all tokens in that group that are expired. Ignores whether there
+    is a refresh token attached to that token.
+    """
     expired = [rs for rs, tset in tokens.items() if is_expired(tset)]
     if expired:
         raise TokensExpired(resource_servers=expired)
@@ -32,6 +38,24 @@ def get_scopes(tokens):
 
 
 def check_scopes(tokens, requested_scopes):
+    """
+    Returns true if scopes match the tokens passed in, false otherwise.
+    **Parameters**
+      ``tokens`` (**dict**)
+      A token grouping, organized by:
+      globus_sdk.auth.token_response.OAuthTokenResponse.by_resource_server
+      Example:
+        {
+            'auth.globus.org': {
+                'scope': 'openid profile email',
+                'access_token': '<token>',
+                'refresh_token': None,
+                'token_type': 'Bearer',
+                'expires_at_seconds': 1234567,
+                'resource_server': 'auth.globus.org'
+            }, ...
+        }
+    """
     loaded_scopes = get_scopes(tokens)
     diff = set(requested_scopes).difference(set(loaded_scopes))
     if diff:
