@@ -1,0 +1,90 @@
+[
+  {},
+  [],
+  {"foo": "bar"},
+  {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "expires_at_seconds": 0,
+    "resource_server": "resource.server.org",
+    "foo": "bar"
+  },
+  {
+    "scope": "custom_scope another_scope",
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "expires_at_seconds": 0,
+    "resource_server": "resource.server.org"
+  },
+  {
+    "access_token": "<token>",
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "expires_at_seconds": 0,
+    "resource_server": "resource.server.org"
+  },
+  {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "expires_at_seconds": 0
+  },
+  {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "resource_server": "resource.server.org"
+  },
+  {
+    "scope": 123,
+    "access_token": "<token>",
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "expires_at_seconds": 0,
+    "resource_server": "resource.server.org"
+  },
+    {
+    "scope": "custom_scope",
+    "access_token": 123,
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "expires_at_seconds": 0,
+    "resource_server": "resource.server.org"
+  },
+      {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "refresh_token": 1234,
+    "token_type": "Bearer",
+    "expires_at_seconds": 0,
+    "resource_server": "resource.server.org"
+  },
+  {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "refresh_token": null,
+    "token_type": "Angry",
+    "expires_at_seconds": 0,
+    "resource_server": "resource.server.org"
+  },
+  {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "expires_at_seconds": "abc",
+    "resource_server": "resource.server.org"
+  },
+  {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "expires_at_seconds": "123abc",
+    "resource_server": "resource.server.org"
+  }
+]

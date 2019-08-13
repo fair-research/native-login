@@ -82,11 +82,11 @@ def test_save_new_tokens(mem_storage, mock_tokens):
     ts2 = {'transfer.api.globus.org': mock_tokens['transfer.api.globus.org']}
     cli.save_tokens(ts1)
     cli.save_tokens(ts2)
-    expected = ['auth.globus.org', 'transfer.api.globus.org']
-    assert list(mem_storage.tokens.keys()) == expected
+    expected = {'auth.globus.org', 'transfer.api.globus.org'}
+    assert set(mem_storage.tokens.keys()) == expected
 
 
-def test_save_overwrite_scope(mem_storage, mock_tokens):
+def test_save_overwrite_scope(mem_storage, mock_tokens, mock_revoke):
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     mem_storage.tokens = {}
     ts1 = {'auth.globus.org': mock_tokens['auth.globus.org']}
@@ -95,6 +95,8 @@ def test_save_overwrite_scope(mem_storage, mock_tokens):
     # A new scope will come with new access tokens, so ensure those change too
     ts2['auth.globus.org']['access_token'] = 'new_acc'
     ts2['auth.globus.org']['refresh_token'] = 'new_ref'
+    ts2['auth.globus.org']['expires_at_seconds'] = (
+        ts2['auth.globus.org']['expires_at_seconds'] + 10)
     cli.save_tokens(ts1)
     cli.save_tokens(ts2)
     assert mem_storage.tokens['auth.globus.org']['scope'] == 'openid profile'
@@ -102,17 +104,31 @@ def test_save_overwrite_scope(mem_storage, mock_tokens):
     assert mem_storage.tokens['auth.globus.org']['refresh_token'] == 'new_ref'
 
 
-def test_save_overwrite_tokens(mem_storage, mock_tokens):
+def test_save_overwrite_tokens(mem_storage, mock_tokens, mock_revoke):
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     mem_storage.tokens = {}
     ts1 = {'auth.globus.org': mock_tokens['auth.globus.org']}
     ts2 = {'auth.globus.org': ts1['auth.globus.org'].copy()}
     ts2['auth.globus.org']['access_token'] = 'new_acc'
     ts2['auth.globus.org']['refresh_token'] = 'new_ref'
+    ts2['auth.globus.org']['expires_at_seconds'] = (
+        ts2['auth.globus.org']['expires_at_seconds'] + 10)
     cli.save_tokens(ts1)
     cli.save_tokens(ts2)
     assert mem_storage.tokens['auth.globus.org']['access_token'] == 'new_acc'
     assert mem_storage.tokens['auth.globus.org']['refresh_token'] == 'new_ref'
+
+
+def test_login_revokes_old_live_token(mock_revoke, mock_tokens, mem_storage):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    mem_storage.tokens = {'auth.globus.org': mock_tokens['auth.globus.org']}
+    new_tokens = {'auth.globus.org': mock_tokens['auth.globus.org'].copy()}
+    # Mock new login 10 seconds after the first one
+    new_tokens['auth.globus.org']['access_token'] = 'new_ac'
+    new_tokens['auth.globus.org']['expires_at_seconds'] += 10
+    cli.save_tokens(new_tokens)
+
+    assert mock_revoke.call_count == 1
 
 
 def test_client_token_calls_with_no_storage_raise_error(mock_tokens):

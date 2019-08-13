@@ -1,0 +1,56 @@
+[
+  {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "expires_at_seconds": 0,
+    "resource_server": "resource.server.org"
+  },
+  {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "expires_at_seconds": 0,
+    "resource_server": "resource.server.org"
+  },
+  {
+    "scope": "custom_scope another_scope",
+    "access_token": "<token>",
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "expires_at_seconds": 0,
+    "resource_server": "resource.server.org"
+  },
+  {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "refresh_token": "<refresh_token>",
+    "token_type": "Bearer",
+    "expires_at_seconds": 0,
+    "resource_server": "resource.server.org"
+  },
+  {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "refresh_token": "",
+    "token_type": "Bearer",
+    "expires_at_seconds": 0,
+    "resource_server": "resource.server.org"
+  },
+  {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "expires_at_seconds": "0",
+    "resource_server": "resource.server.org"
+  },
+  {
+    "scope": "custom_scope",
+    "access_token": "<token>",
+    "refresh_token": null,
+    "token_type": "Bearer",
+    "expires_at_seconds": 123.456,
+    "resource_server": "resource.server.org"
+  }
+]
