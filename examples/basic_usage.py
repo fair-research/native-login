@@ -20,9 +20,25 @@ tokens = client.login(
     refresh_tokens=True,
 )
 
+# Calling login() twice will load tokens instead of initiating an oauth flow,
+# as long as the requested scopes match and the tokens have not expired.
+assert tokens == client.login(requested_scopes=['openid', 'profile'])
+
+# You can also load tokens explicitly. This will also load tokens if you have
+# done other logins
+assert tokens == client.load_tokens()
+# If you want to disregard other saved tokens
+assert tokens == client.load_tokens(requested_scopes=['openid', 'profile'])
+
+# Loading by scope is also supported
+tokens_by_scope = client.load_tokens_by_scope()
+assert set(tokens_by_scope.keys()) == {'openid', 'profile'}
+
 # Authorizers automatically choose a refresh token authorizer if possible,
 # and will automatically save new refreshed tokens when they expire.
 ac_authorizer = client.get_authorizers()['auth.globus.org']
+# Also supported
+ac_authorizer = client.get_authorizers_by_scope()['openid']
 
 # Example client usage:
 auth_cli = AuthClient(authorizer=ac_authorizer)
