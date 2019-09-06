@@ -7,6 +7,14 @@ see the list of commits from the last version or use `git log`.
 
 ## 0.1.0
 
+### [0.1.5] - Sept 6, 2019
+
+- Fixed improper expired tokens exception when subset tokens were loaded with refresh
+
+### [0.1.4] - Sept 6, 2019
+
+- Added more examples to docs
+
 ### [0.1.3] - Aug 13, 2019
 
 - Fixed improper error being raised if user declined consent when using local server
