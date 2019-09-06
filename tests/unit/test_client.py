@@ -238,6 +238,20 @@ def test_client_token_refresh_with_tokens(expired_tokens_with_refresh,
         assert tset['access_token'] == '<Refreshed Access Token>'
 
 
+def test_client_token_refresh_with_requested_scope_subset(
+                                    mem_storage, expired_tokens_with_refresh,
+                                    mock_refresh_token_authorizer):
+    mem_storage.tokens = expired_tokens_with_refresh
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    tokens = cli.load_tokens(requested_scopes=['profile'])
+    assert tokens
+    for tset in mem_storage.tokens.values():
+        if tset['resource_server'] == 'auth.globus.org':
+            assert tset['access_token'] == '<Refreshed Access Token>'
+        else:
+            assert tset['access_token'] != '<Refreshed Access Token>'
+
+
 def test_client_get_authorizers(mock_tokens,
                                 mock_refresh_token_authorizer,
                                 mem_storage):
