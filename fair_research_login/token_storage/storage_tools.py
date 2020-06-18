@@ -104,8 +104,7 @@ def verify_token_group(tokens):
 
     if not tk_set.issuperset(REQUIRED_TOKEN_KEYS):
         raise InvalidTokenFormat('Missing required values: {}'.format(
-            REQUIRED_TOKEN_KEYS.difference(tk_set), code='missing_required'
-        ))
+            REQUIRED_TOKEN_KEYS.difference(tk_set)), code='missing_required')
 
     for tp in ['access_token', 'scope', 'resource_server']:
         if not isinstance(tokens.get(tp, ''), string_types):
