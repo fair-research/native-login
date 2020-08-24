@@ -14,7 +14,13 @@ class InvalidTokenFormat(LoginException):
                                 self.code)
 
 
-class LocalServerError(LoginException):
+class AuthFailure(LoginException):
+    """Authentication with Globus Auth failed for some reason"""
+    pass
+
+
+class LocalServerError(AuthFailure):
+    """The Local Server Code Handler failed to get an auth code"""
     pass
 
 

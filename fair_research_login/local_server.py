@@ -1,4 +1,4 @@
-
+import logging
 import threading
 from contextlib import contextmanager
 import string
@@ -13,6 +13,8 @@ except ImportError:
 
 from fair_research_login.exc import LocalServerError
 from fair_research_login.code_handler import CodeHandler
+
+log = logging.getLogger(__name__)
 
 HTML_TEMPLATE = """
 <!DOCTYPE html>
@@ -77,17 +79,30 @@ DEFAULT_VARS = {
 
 class LocalServerCodeHandler(CodeHandler):
 
-    def __init__(self, template=None,
-                 template_vars={}, hostname='localhost'):
+    def __init__(self, template=None, template_vars=None,
+                 hostname='localhost', cli_message=None):
         super(LocalServerCodeHandler, self).__init__()
         self._server = None
         self.hostname = hostname
         self.template = string.Template(template or HTML_TEMPLATE)
         self.template_vars = template_vars or DEFAULT_VARS
+        default_message = ('Starting login with Globus Auth, '
+                           'press ^C to cancel.')
+        self.cli_message = cli_message or default_message
+        self.no_local_server = False
 
-    def set_app_name(self, name):
-        if self.template_vars.get('defaults', {}).get('app_name') == '':
-            self.template_vars['defaults']['app_name'] = name
+    def is_available(self):
+        local = self.is_remote_session() is False
+        enabled = self.no_local_server is False
+        log.debug('Local Server: Local: {} Enabled: {}'.format(local, enabled))
+        return local and enabled
+
+    def set_context(self, *args, **kwargs):
+        super(LocalServerCodeHandler, self).set_context(*args, **kwargs)
+        if not self.template_vars.get('defaults', {}).get('app_name'):
+            self.template_vars['defaults']['app_name'] = self.app_name
+        self.no_local_server = (kwargs.get('no_local_server') or
+                                self.no_local_server)
 
     @property
     def server(self):
@@ -102,6 +117,7 @@ class LocalServerCodeHandler(CodeHandler):
         thread = threading.Thread(target=self.server.serve_forever)
         thread.daemon = True
         thread.start()
+        self.write_message(self.cli_message)
 
         yield
 
