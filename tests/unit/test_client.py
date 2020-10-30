@@ -2,13 +2,20 @@ from uuid import uuid4
 import pytest
 from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer
 
+try:
+    from unittest.mock import Mock
+except ImportError:
+    from mock import Mock
+
 from fair_research_login.client import NativeClient
 from fair_research_login.token_storage.configparser_token_storage import (
     MultiClientTokenStorage
 )
 from fair_research_login.local_server import LocalServerCodeHandler
 from fair_research_login.code_handler import InputCodeHandler
-from fair_research_login.exc import LoadError, ScopesMismatch, TokensExpired
+from fair_research_login.exc import (
+    LoadError, ScopesMismatch, TokensExpired, AuthFailure
+)
 from fair_research_login.version import __version__
 
 
@@ -19,7 +26,10 @@ def test_version_sanity():
 def test_client_defaults():
     cli = NativeClient(client_id=str(uuid4()))
     assert isinstance(cli.token_storage, MultiClientTokenStorage)
-    assert isinstance(cli.local_server_code_handler, LocalServerCodeHandler)
+    assert isinstance(cli.code_handlers, tuple)
+    local_server_handler, input_handler = cli.code_handlers
+    assert isinstance(local_server_handler, LocalServerCodeHandler)
+    assert isinstance(input_handler, InputCodeHandler)
 
 
 def test_client_login(mock_input, mock_webbrowser, mock_token_response,
@@ -40,7 +50,57 @@ def test_custom_local_server_handler(mock_input, mock_webbrowser,
                        local_server_code_handler=InputCodeHandler(),
                        token_storage=mem_storage)
     cli.login()
-    assert mock_input.called
+
+
+def test_remote_server_fallback(monkeypatch, mock_input, mock_webbrowser,
+                                mock_token_response,
+                                mock_is_remote_session):
+    mock_is_remote_session.return_value = True
+    monkeypatch.setattr(LocalServerCodeHandler, 'authenticate', Mock())
+    monkeypatch.setattr(InputCodeHandler, 'authenticate', Mock())
+
+    cli = NativeClient(client_id=str(uuid4()))
+    cli.login()
+    assert mock_is_remote_session.called
+    assert not LocalServerCodeHandler.authenticate.called
+    assert InputCodeHandler.authenticate.called
+
+
+def test_code_handler_keyboard_interrupt_skip(monkeypatch, mock_input,
+                                              mock_webbrowser,
+                                              mock_token_response):
+    monkeypatch.setattr(LocalServerCodeHandler, 'authenticate',
+                        Mock(side_effect=KeyboardInterrupt()))
+    monkeypatch.setattr(InputCodeHandler, 'authenticate', Mock())
+
+    cli = NativeClient(client_id=str(uuid4()))
+    cli.login()
+    assert InputCodeHandler.authenticate.called
+
+
+def test_keyboard_interrupt_disables_browser_open(monkeypatch,
+                                                  mock_webbrowser):
+    InputCodeHandler.set_browser_enabled(True)
+    monkeypatch.setattr(LocalServerCodeHandler, 'get_code',
+                        Mock(side_effect=KeyboardInterrupt))
+    monkeypatch.setattr(InputCodeHandler, 'get_code',
+                        Mock(side_effect=KeyboardInterrupt))
+    cli = NativeClient(client_id=str(uuid4()))
+    with pytest.raises(AuthFailure):
+        cli.login()
+    assert mock_webbrowser.call_count == 1
+
+
+def test_code_handler_auth_fail(monkeypatch, mock_input, mock_webbrowser,
+                                mock_token_response):
+    monkeypatch.setattr(LocalServerCodeHandler, 'authenticate',
+                        Mock(return_value=None))
+    monkeypatch.setattr(InputCodeHandler, 'authenticate',
+                        Mock(return_value=None))
+
+    cli = NativeClient(client_id=str(uuid4()))
+    with pytest.raises(AuthFailure):
+        cli.login()
 
 
 def test_revoke_login(mock_revoke, mock_tokens):

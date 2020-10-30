@@ -26,10 +26,19 @@ class CodeHandler(object):
 
     @staticmethod
     def is_browser_enabled():
+        """
+        Will login automatically open the users browser to the Globus Auth
+        Link? If False, the user will need to manually open a browser and
+        copy/paste the link.
+        """
         return CodeHandler._browser_enabled
 
     @staticmethod
     def set_browser_enabled(value):
+        """
+        Set whether login will automatically open the users browser to the
+        Globus Auth Link. GLOBAL SETTING, this will affect ALL Code Handlers.
+        """
         if value not in (True, False):
             raise ValueError('Value must be True or False')
         CodeHandler._browser_enabled = value
@@ -74,10 +83,6 @@ class CodeHandler(object):
         self.client = client
         self.app_name = client.app_name
         self.no_browser = kwargs.get('no_browser') or self.no_browser
-
-    @classmethod
-    def set_user_interrupt(cls):
-        CodeHandler.user_interrupt = True
 
     def authenticate(self, url):
         """

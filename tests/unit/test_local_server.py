@@ -72,8 +72,12 @@ def test_local_server_with_custom_template_vars():
         'error': {},
         'success': {}
     }
+
+    class MockNativeClient:
+        app_name = 'My Wicked Cool App'
+
     local_server = LocalServerCodeHandler(template_vars=template_vars)
-    local_server.set_app_name('My Wicked Cool App')
+    local_server.set_context(MockNativeClient)
     server = LocalServerTester(local_server)
     server.test({'code': 'test_code'})
     assert (template_vars['defaults']['post_login_message'] in
