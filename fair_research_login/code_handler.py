@@ -1,8 +1,10 @@
 import os
-import sys
+import logging
 import webbrowser
 from contextlib import contextmanager
 import six
+
+log = logging.getLogger(__name__)
 
 
 class CodeHandler(object):
@@ -11,12 +13,36 @@ class CodeHandler(object):
     Globus Auth. It's intended to be subclassed to define the behavior for
     how the code gets from Globus Auth to the Native App.
     """
+    _browser_enabled = True
 
     def __init__(self, paste_url_in_browser_msg=None):
+        self.client = None
+        self.app_name = ''
+        self.no_browser = False
         self.paste_url_in_browser_msg = (
             paste_url_in_browser_msg or
             'Please paste the following URL in a browser'
         )
+
+    @staticmethod
+    def is_browser_enabled():
+        """
+        Will login automatically open the users browser to the Globus Auth
+        Link? If False, the user will need to manually open a browser and
+        copy/paste the link.
+        """
+        return CodeHandler._browser_enabled
+
+    @staticmethod
+    def set_browser_enabled(value):
+        """
+        Set whether login will automatically open the users browser to the
+        Globus Auth Link. GLOBAL SETTING, this will affect ALL Code Handlers.
+        """
+        if value not in (True, False):
+            raise ValueError('Value must be True or False')
+        log.info('Global setting for automatic browser set: {}'.format(value))
+        CodeHandler._browser_enabled = value
 
     @contextmanager
     def start(self):
@@ -28,6 +54,22 @@ class CodeHandler(object):
         """
         yield
 
+    def is_available(self):
+        """
+        Can this code handler be used? If False, the client will skip this
+        handler and use the next one in the list. Typically this will be
+        used for the LocalServerCodeHandler when in an SSH session so it
+        can abort and use a InputCodeHandler instead.
+        """
+        return True
+
+    def is_browser_available(self):
+        is_rem, is_enb = self.is_remote_session(), self.is_browser_enabled()
+        available = is_rem is False and is_enb is True
+        log.debug('Browser| Remote: {}, Enabled: {}, Available: {}'
+                  ''.format(is_rem, is_enb, available))
+        return available
+
     def get_redirect_uri(self):
         """
         For use with code handlers that don't know their redirect_uri until
@@ -37,23 +79,23 @@ class CodeHandler(object):
         """
         return None
 
-    def set_app_name(self, app_name):
+    def set_context(self, client, **kwargs):
         """
-        Optional method for setting the app name, if this is useful to the
-        code handler. For local server, this is displayed on the local server's
-        page.
-        :param app_name: String to use for the app name.
+        Set context for a given code handler, which includes the NativeClient
+        itself and any login_kwargs.
         """
-        pass
+        self.client = client
+        self.app_name = client.app_name
+        self.no_browser = kwargs.get('no_browser') or self.no_browser
 
-    def authenticate(self, url, no_browser=False):
+    def authenticate(self, url):
         """
         Use the given url to direct the user to Globus Auth so they can login.
         :param url: URL to Globus Auth.
-        :param no_browser: Don't automatically open the user's browser.
         :return:
         """
-        if no_browser is False and not self.is_remote_session():
+        open_browser = self.no_browser is False
+        if self.is_browser_available() and open_browser:
             webbrowser.open(url, new=1)
         else:
             self.write_message('{}:\n{}'.format(self.paste_url_in_browser_msg,
@@ -61,9 +103,9 @@ class CodeHandler(object):
         try:
             return self.get_code()
         except KeyboardInterrupt:
-            self.write_message('Interrupt Received. '
-                               'Canceling authentication...')
-            sys.exit(-1)
+            log.info('Disabling browser due to user keyboard interrupt.')
+            self.set_browser_enabled(False)
+            raise
 
     def write_message(self, message):
         """
@@ -87,7 +129,8 @@ class CodeHandler(object):
         Check if this is being run from an ssh shell.
         :return: True if ssh shell, false otherwise
         """
-        return os.environ.get('SSH_TTY', os.environ.get('SSH_CONNECTION'))
+        return bool(os.environ.get('SSH_TTY') or
+                    os.environ.get('SSH_CONNECTION'))
 
 
 class InputCodeHandler(CodeHandler):

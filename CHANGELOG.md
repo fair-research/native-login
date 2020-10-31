@@ -4,6 +4,13 @@
 Below are major changes for each version Release. For detailed information,
 see the list of commits from the last version or use `git log`.
 
+## 0.2.0
+
+### [0.2.0] - Nov 31, 2020
+
+- ``local_server_code_handler`` and ``secondary_code_handler`` replaced by ``code_handlers`` list
+- ``set_app_name()`` removed on code_handlers, replaced by ``set_context()``
+
 
 ## 0.1.0
 

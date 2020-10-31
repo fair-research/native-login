@@ -1,3 +1,4 @@
+import logging
 from globus_sdk import (NativeAppAuthClient, RefreshTokenAuthorizer,
                         AccessTokenAuthorizer)
 import globus_sdk.exc
@@ -9,8 +10,10 @@ from fair_research_login.token_storage import (
     verify_token_group, TOKEN_GROUP_KEYS, get_scopes
 )
 from fair_research_login.exc import (
-    LoadError, TokensExpired, TokenStorageDisabled, NoSavedTokens
+    LoadError, TokensExpired, TokenStorageDisabled, NoSavedTokens, AuthFailure
 )
+
+log = logging.getLogger(__name__)
 
 
 class NativeClient(object):
@@ -55,16 +58,13 @@ class NativeClient(object):
           at fair_research_login.token_storage.MultiClientTokenStorage, which
           saves tokens in a section named by your clients ``client_id``. None
           may be used to disable token storage.
-        ``local_server_code_handler`` (:class:`CodeHandler \
+        ``code_handlers`` (*list* of :class:`CodeHandler \
           <fair_research_login.code_handler.CodeHandler>`)
-          A Local Code handler capable of fetching and returning the
+          A list of Code handlers capable of fetching and returning the
           authorization code generated as a browser query param in Globus Auth
-          Used during login(), but can be disabled with
-          login(no_local_server=True)
-        ``secondary_code_handler`` (:class:`CodeHandler \
-          <fair_research_login.code_handler.CodeHandler>`)
-          Handler to be used if the ``local_server_code_handler`` has been
-          disabled.
+          Code handlers are executed in the order they appear in the list, and
+          may be skipped by users with ^C or if they cannot be run (Local
+          Server Code Handler cannot run on remote servers, for example).
 
     ** Methods **
 
@@ -87,8 +87,9 @@ class NativeClient(object):
     TOKEN_STORAGE_ATTRS = {'write_tokens', 'read_tokens', 'clear_tokens'}
 
     def __init__(self, token_storage=MultiClientTokenStorage(),
-                 local_server_code_handler=LocalServerCodeHandler(),
-                 secondary_code_handler=InputCodeHandler(),
+                 local_server_code_handler=None,
+                 secondary_code_handler=None,
+                 code_handlers=(LocalServerCodeHandler(), InputCodeHandler()),
                  default_scopes=None,
                  *args, **kwargs):
         self.client = NativeAppAuthClient(*args, **kwargs)
@@ -96,16 +97,26 @@ class NativeClient(object):
         if token_storage is not None:
             self.verify_token_storage(self.token_storage)
         self.app_name = kwargs.get('app_name') or 'My App'
-        self.local_server_code_handler = local_server_code_handler
-        self.local_server_code_handler.set_app_name(self.app_name)
-        self.secondary_code_handler = secondary_code_handler
+        if local_server_code_handler or secondary_code_handler:
+            log.warning('Specifying "local_server_code_handler" or '
+                        '"code_handler" will be removed. Instead, specify '
+                        'handlers in a list with keyword "code_handlers"')
+            self.code_handlers = [
+                    local_server_code_handler or LocalServerCodeHandler(),
+                    secondary_code_handler or InputCodeHandler()
+                ]
+        else:
+            self.code_handlers = code_handlers
+        log.info('Using code handlers {}'.format(self.code_handlers))
         if isinstance(self.token_storage, MultiClientTokenStorage):
             self.token_storage.set_client_id(kwargs.get('client_id'))
+        log.info('Token storage set to {}'.format(self.token_storage))
+        log.info('Automatically open browser: {}'
+                 ''.format(InputCodeHandler.is_browser_enabled()))
         self.default_scopes = default_scopes
 
-    def login(self, no_local_server=False, no_browser=False,
-              requested_scopes=(), refresh_tokens=None,
-              prefill_named_grant=None, additional_params=None, force=False):
+    def login(self, requested_scopes=(), refresh_tokens=None, force=False,
+              prefill_named_grant=None, additional_params=None, **kwargs):
         r"""
         Do a Native App Auth Flow to get tokens for requested scopes. This
         first attempts to load tokens and will simply return those if they are
@@ -143,28 +154,58 @@ class NativeClient(object):
             except (LoadError, Exception):
                 pass
 
-        grant_name = prefill_named_grant or '{} Login'.format(self.app_name)
-        code_handler = (self.secondary_code_handler
-                        if no_local_server else self.local_server_code_handler)
-
-        with code_handler.start():
-            self.client.oauth2_start_flow(
-                requested_scopes=requested_scopes or self.default_scopes,
-                refresh_tokens=refresh_tokens,
-                prefill_named_grant=grant_name,
-                redirect_uri=code_handler.get_redirect_uri()
-            )
-            auth_url = self.client.oauth2_get_authorize_url(
-                additional_params=additional_params
-            )
-            auth_code = code_handler.authenticate(url=auth_url,
-                                                  no_browser=no_browser)
+        auth_code = self.get_code(requested_scopes, refresh_tokens,
+                                  prefill_named_grant, additional_params,
+                                  **kwargs)
         token_response = self.client.oauth2_exchange_code_for_tokens(auth_code)
         try:
             self.save_tokens(token_response.by_resource_server)
         except LoadError:
             pass
         return token_response.by_resource_server
+
+    def get_code(self, requested_scopes, refresh_tokens, prefill_named_grant,
+                 additional_params, **kwargs):
+        """Attempt all configured code handlers in self.code_handlers from
+        first to last. If one is not available (local server will not run
+        if it detects it is on a remote connection), the next one in the list
+        will run. Additionally, if the user enters ^C to interrupt, the code
+        handler is skipped and the next one in the list is called. If no
+        code handlers remain, an exc.AuthFailure exception is raised.
+
+        Do not call directly. Called indirectly by `login()`. Any additional
+        ``kwargs`` passed to login will be passed to each login handler.
+        """
+        grant_name = prefill_named_grant or '{} Login'.format(self.app_name)
+        oauth2_args = dict(
+            requested_scopes=requested_scopes or self.default_scopes,
+            refresh_tokens=refresh_tokens,
+            prefill_named_grant=grant_name,
+        )
+
+        for ch in self.code_handlers:
+            if not ch.is_available():
+                log.info('{} code handler not available.'.format(ch))
+                continue
+            ch.set_context(self, **kwargs)
+            with ch.start():
+                log.debug('Starting code handler {}'.format(ch))
+                self.client.oauth2_start_flow(
+                    redirect_uri=ch.get_redirect_uri(),
+                    **oauth2_args
+                )
+                auth_url = self.client.oauth2_get_authorize_url(
+                    additional_params=additional_params
+                )
+                try:
+                    auth_code = ch.authenticate(url=auth_url)
+                    if auth_code:
+                        log.debug('Retrieval of auth code successful!')
+                        return auth_code
+                except KeyboardInterrupt:
+                    # Reattempt with the next handler if this one failed.
+                    continue
+        raise AuthFailure('Failed to get an auth_code from Globus Auth.')
 
     def verify_token_storage(self, obj):
         """
