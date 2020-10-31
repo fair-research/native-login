@@ -81,7 +81,7 @@ def test_code_handler_keyboard_interrupt_skip(monkeypatch, mock_input,
 def test_keyboard_interrupt_disables_browser_open(monkeypatch, mock_input,
                                                   mock_webbrowser):
     InputCodeHandler.set_browser_enabled(True)
-    is_remote = Mock(return_value=True)
+    is_remote = Mock(return_value=False)
     user_interrupt = Mock(side_effect=KeyboardInterrupt())
     monkeypatch.setattr(InputCodeHandler, 'is_remote_session', is_remote)
     monkeypatch.setattr(InputCodeHandler, 'get_code', user_interrupt)
