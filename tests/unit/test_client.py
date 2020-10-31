@@ -79,11 +79,10 @@ def test_code_handler_keyboard_interrupt_skip(monkeypatch, mock_input,
 
 
 def test_keyboard_interrupt_disables_browser_open(monkeypatch, mock_input,
-                                                  mem_storage,
                                                   mock_webbrowser):
     InputCodeHandler.set_browser_enabled(True)
     monkeypatch.setattr(InputCodeHandler, 'get_code',
-                        Mock(side_effect=KeyboardInterrupt))
+                        Mock(side_effect=KeyboardInterrupt()))
     cli = NativeClient(client_id=str(uuid4()),
                        code_handlers=[InputCodeHandler(), InputCodeHandler()])
     # Login should open the browser the first time, but not the second.

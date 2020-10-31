@@ -4,7 +4,7 @@ import webbrowser
 from contextlib import contextmanager
 import six
 
-log = logging.getLogger()
+log = logging.getLogger(__name__)
 
 
 class CodeHandler(object):
@@ -41,6 +41,7 @@ class CodeHandler(object):
         """
         if value not in (True, False):
             raise ValueError('Value must be True or False')
+        log.info('Global setting for automatic browser set: {}'.format(value))
         CodeHandler._browser_enabled = value
 
     @contextmanager
@@ -63,8 +64,11 @@ class CodeHandler(object):
         return True
 
     def is_browser_available(self):
-        return (self.is_remote_session() is False and
-                self.is_browser_enabled() is True)
+        is_rem, is_enb = self.is_remote_session(), self.is_browser_enabled()
+        available = is_rem is False and is_enb is True
+        log.debug('Browser| Remote: {}, Enabled: {}, Available: {}'
+                  ''.format(is_rem, is_enb, available))
+        return available
 
     def get_redirect_uri(self):
         """
@@ -99,7 +103,7 @@ class CodeHandler(object):
         try:
             return self.get_code()
         except KeyboardInterrupt:
-            log.info('Disabling browser due to user interrupt.')
+            log.info('Disabling browser due to user keyboard interrupt.')
             self.set_browser_enabled(False)
             raise
 
