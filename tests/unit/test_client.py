@@ -79,6 +79,7 @@ def test_code_handler_keyboard_interrupt_skip(monkeypatch, mock_input,
 
 
 def test_keyboard_interrupt_disables_browser_open(monkeypatch,
+                                                  mock_token_response,
                                                   mock_webbrowser):
     InputCodeHandler.set_browser_enabled(True)
     monkeypatch.setattr(LocalServerCodeHandler, 'get_code',
