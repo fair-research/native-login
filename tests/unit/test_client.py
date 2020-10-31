@@ -78,7 +78,7 @@ def test_code_handler_keyboard_interrupt_skip(monkeypatch, mock_input,
     assert InputCodeHandler.authenticate.called
 
 
-def test_keyboard_interrupt_disables_browser_open(monkeypatch,
+def test_keyboard_interrupt_disables_browser_open(monkeypatch, mock_input,
                                                   mock_token_response,
                                                   mock_webbrowser):
     InputCodeHandler.set_browser_enabled(True)
@@ -87,6 +87,7 @@ def test_keyboard_interrupt_disables_browser_open(monkeypatch,
     monkeypatch.setattr(InputCodeHandler, 'get_code',
                         Mock(side_effect=KeyboardInterrupt))
     cli = NativeClient(client_id=str(uuid4()))
+    # Login should open the browser the first time, but not the second.
     with pytest.raises(AuthFailure):
         cli.login()
     assert mock_webbrowser.call_count == 1
