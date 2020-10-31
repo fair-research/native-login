@@ -1,6 +1,7 @@
 import pytest
 import webbrowser
 import time
+import logging
 from copy import deepcopy
 from .mocks import MemoryStorage, MOCK_TOKEN_SET, MOCK_TOKEN_SET_UNDERSCORES
 import six
