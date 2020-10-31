@@ -53,13 +53,13 @@ def test_custom_local_server_handler(mock_input, mock_webbrowser,
 
 
 def test_remote_server_fallback(monkeypatch, mock_input, mock_webbrowser,
-                                mock_token_response,
+                                mock_token_response, mem_storage,
                                 mock_is_remote_session):
     mock_is_remote_session.return_value = True
     monkeypatch.setattr(LocalServerCodeHandler, 'authenticate', Mock())
     monkeypatch.setattr(InputCodeHandler, 'authenticate', Mock())
 
-    cli = NativeClient(client_id=str(uuid4()))
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     cli.login()
     assert mock_is_remote_session.called
     assert not LocalServerCodeHandler.authenticate.called
@@ -67,40 +67,42 @@ def test_remote_server_fallback(monkeypatch, mock_input, mock_webbrowser,
 
 
 def test_code_handler_keyboard_interrupt_skip(monkeypatch, mock_input,
-                                              mock_webbrowser,
+                                              mock_webbrowser, mem_storage,
                                               mock_token_response):
     monkeypatch.setattr(LocalServerCodeHandler, 'authenticate',
                         Mock(side_effect=KeyboardInterrupt()))
     monkeypatch.setattr(InputCodeHandler, 'authenticate', Mock())
 
-    cli = NativeClient(client_id=str(uuid4()))
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     cli.login()
     assert InputCodeHandler.authenticate.called
 
 
 def test_keyboard_interrupt_disables_browser_open(monkeypatch, mock_input,
                                                   mock_token_response,
+                                                  mem_storage,
                                                   mock_webbrowser):
     InputCodeHandler.set_browser_enabled(True)
     monkeypatch.setattr(LocalServerCodeHandler, 'get_code',
                         Mock(side_effect=KeyboardInterrupt))
     monkeypatch.setattr(InputCodeHandler, 'get_code',
                         Mock(side_effect=KeyboardInterrupt))
-    cli = NativeClient(client_id=str(uuid4()))
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     # Login should open the browser the first time, but not the second.
     with pytest.raises(AuthFailure):
-        cli.login()
+        cli.logout()
+        cli.login(token_storage=mem_storage)
     assert mock_webbrowser.call_count == 1
 
 
 def test_code_handler_auth_fail(monkeypatch, mock_input, mock_webbrowser,
-                                mock_token_response):
+                                mock_token_response, mem_storage):
     monkeypatch.setattr(LocalServerCodeHandler, 'authenticate',
                         Mock(return_value=None))
     monkeypatch.setattr(InputCodeHandler, 'authenticate',
                         Mock(return_value=None))
 
-    cli = NativeClient(client_id=str(uuid4()))
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     with pytest.raises(AuthFailure):
         cli.login()
 
