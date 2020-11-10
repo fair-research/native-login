@@ -66,6 +66,17 @@ def test_remote_server_fallback(monkeypatch, mock_input, mock_webbrowser,
     assert InputCodeHandler.authenticate.called
 
 
+def test_login_no_local_server(monkeypatch, mock_input, mock_webbrowser,
+                               mock_token_response, mem_storage):
+    monkeypatch.setattr(LocalServerCodeHandler, 'authenticate', Mock())
+    monkeypatch.setattr(InputCodeHandler, 'authenticate', Mock())
+
+    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
+    cli.login(no_local_server=True)
+    assert not LocalServerCodeHandler.authenticate.called
+    assert InputCodeHandler.authenticate.called
+
+
 def test_code_handler_keyboard_interrupt_skip(monkeypatch, mock_input,
                                               mock_webbrowser, mem_storage,
                                               mock_token_response):
