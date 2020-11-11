@@ -6,10 +6,22 @@ see the list of commits from the last version or use `git log`.
 
 ## 0.2.0
 
-### [0.2.0] - Nov 31, 2020
+### [0.2.0] - Nov 11, 2020
 
 - ``local_server_code_handler`` and ``secondary_code_handler`` replaced by ``code_handlers`` list
 - ``set_app_name()`` removed on code_handlers, replaced by ``set_context()``
+- ``LocalServerLoginHandler`` now automatically skips and defaults to ``InputCodeHandler``
+  if it detects it is running on a remote server
+- Added class level set_browser_enabled(True/False) to set global
+  setting for enabling/disabling auto-opening the browser. This can
+  be done via: `from fair_research_login import CodeHandler` and
+  `CodeHandler.set_browser_enabled(False)`
+- Browser is automatically disabled if user enters ^C, to avoid taking control away from them more than once.
+- User Keyboard interrupt no longer results in calling sys.exit()
+- Keyboard interrupt now causes the current code handler to be 'skipped', and the next one in line used.
+  By default, this means ``InputCodeHandler`` will be used if the user enters a KeyboardInterrupt for
+  ``LocalServerCodeHandler``
+- fair_research_login.exc.AuthFailure raised if no code was retrieved and no ``code_handlers`` remain
 
 
 ## 0.1.0
