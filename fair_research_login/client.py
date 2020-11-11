@@ -184,10 +184,10 @@ class NativeClient(object):
         )
 
         for ch in self.code_handlers:
+            ch.set_context(self, **kwargs)
             if not ch.is_available():
                 log.info('{} code handler not available.'.format(ch))
                 continue
-            ch.set_context(self, **kwargs)
             with ch.start():
                 log.debug('Starting code handler {}'.format(ch))
                 self.client.oauth2_start_flow(
