@@ -1,8 +1,5 @@
-include tox.ini
-include README.md
+include README.rst
 include LICENSE
 include requirements.txt
-include test-requirements.txt
 prune tests
-prune examples
-global-exclude .*
+prune test-requirements.txt
