@@ -1,1 +1,2 @@
 globus-sdk>=1.5.0
+six
