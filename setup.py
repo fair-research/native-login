@@ -21,6 +21,7 @@ setup(
     name='fair-research-login',
     description='A generalized library for storing native auth tokens',
     long_description=long_description,
+    long_description_content_type='text/x-rst',
     url='https://github.com/fair-research/native-login',
     maintainer='Fair Research',
     maintainer_email='',
