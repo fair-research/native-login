@@ -1,8 +1,15 @@
-# Changes in Fair Research Login
+# Changelog
+
+All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
+
+### [0.2.1](https://github.com/fair-research/native-login/compare/v0.2.0...v0.2.1) (2021-06-17)
 
 
-Below are major changes for each version Release. For detailed information,
-see the list of commits from the last version or use `git log`.
+### Bug Fixes
+
+* Include six as a dependency ([f09cc68](https://github.com/fair-research/native-login/commit/f09cc68c9e26f1b3d2ef2ea5f1d3096771b231d1))
+* logging being overly verbose on [info]. Moved to [debug] ([778ae65](https://github.com/fair-research/native-login/commit/778ae65e4ca108b4fc65222a3c464cf0a50e910f))
+* Tests being included in wheels ([efff487](https://github.com/fair-research/native-login/commit/efff487caab6b2c8d8134c5d9c8c16fbd6480cce))
 
 ### [0.2.0] - Nov 11, 2020
 
