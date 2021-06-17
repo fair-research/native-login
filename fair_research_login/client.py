@@ -107,12 +107,12 @@ class NativeClient(object):
                 ]
         else:
             self.code_handlers = code_handlers
-        log.info('Using code handlers {}'.format(self.code_handlers))
+        log.debug('Using code handlers {}'.format(self.code_handlers))
         if isinstance(self.token_storage, MultiClientTokenStorage):
             self.token_storage.set_client_id(kwargs.get('client_id'))
-        log.info('Token storage set to {}'.format(self.token_storage))
-        log.info('Automatically open browser: {}'
-                 ''.format(InputCodeHandler.is_browser_enabled()))
+        log.debug('Token storage set to {}'.format(self.token_storage))
+        log.debug('Automatically open browser: {}'
+                  ''.format(InputCodeHandler.is_browser_enabled()))
         self.default_scopes = default_scopes
 
     def login(self, requested_scopes=(), refresh_tokens=None, force=False,
@@ -186,7 +186,7 @@ class NativeClient(object):
         for ch in self.code_handlers:
             ch.set_context(self, **kwargs)
             if not ch.is_available():
-                log.info('{} code handler not available.'.format(ch))
+                log.debug('{} code handler not available.'.format(ch))
                 continue
             with ch.start():
                 log.debug('Starting code handler {}'.format(ch))

@@ -41,7 +41,7 @@ class CodeHandler(object):
         """
         if value not in (True, False):
             raise ValueError('Value must be True or False')
-        log.info('Global setting for automatic browser set: {}'.format(value))
+        log.debug('Global setting for automatic browser set: {}'.format(value))
         CodeHandler._browser_enabled = value
 
     @contextmanager
@@ -103,7 +103,13 @@ class CodeHandler(object):
         try:
             return self.get_code()
         except KeyboardInterrupt:
-            log.info('Disabling browser due to user keyboard interrupt.')
+            # Opening the browser for the user is nice the first time. However,
+            # KeyboardInterrupt signifies something went wrong for the user.
+            # Therefore, we should not assume anything at this point. Turn off
+            # browser functionality due to that feature taking control away
+            # from the user's terminal.
+            log.info('Disabling auto-open-browser due to user keyboard '
+                     'interrupt.')
             self.set_browser_enabled(False)
             raise
 
