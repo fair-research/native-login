@@ -3,7 +3,7 @@ PIP=pip
 
 .PHONY: lint test
 lint:
-	flake8 fair_research_login
+	flake8 --max-complexity=10
 test:
 	pytest
 
