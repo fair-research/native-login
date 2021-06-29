@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.2](https://github.com/fair-research/native-login/compare/v0.2.1...v0.2.2) (2021-06-29)
+
+
+### Bug Fixes
+
+* Disallow Globus SDK version 3 ([b2b38bc](https://github.com/fair-research/native-login/commit/b2b38bc4f650ba1ac4e74549fd5abc11a3e606aa))
+
 ### [0.2.1](https://github.com/fair-research/native-login/compare/v0.2.0...v0.2.1) (2021-06-17)
 
 
