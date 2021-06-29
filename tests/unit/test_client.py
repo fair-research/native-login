@@ -370,7 +370,11 @@ def test_authorizer_refresh_hook(mock_tokens,
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     rs_auth = cli.get_authorizers()['resource.server.org']
     rs_auth.expires_at = 0
-    rs_auth.check_expiration_time()
+    ensure_valid_token = (
+            getattr(rs_auth, 'check_expiration_time', None) or
+            getattr(rs_auth, 'ensure_valid_token', None)
+    )
+    ensure_valid_token()
 
     tokens = cli.load_tokens()
     assert 'example.on.refresh.success' in tokens.keys()

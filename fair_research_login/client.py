@@ -376,10 +376,14 @@ class NativeClient(object):
                 expires_at=token_dict['expires_at_seconds'],
             )
             try:
-                authorizer.check_expiration_time()
+                ensure_valid_token = (
+                        getattr(authorizer, 'check_expiration_time', None) or
+                        getattr(authorizer, 'ensure_valid_token', None)
+                )
+                ensure_valid_token()
                 token_dict['access_token'] = authorizer.access_token
                 token_dict['expires_at_seconds'] = authorizer.expires_at
-            except globus_sdk.exc.AuthAPIError as aapie:
+            except globus_sdk.AuthAPIError as aapie:
                 if aapie.message == 'invalid_grant':
                     raise TokensExpired('Refresh Token Expired: ',
                                         resource_servers=[rs])

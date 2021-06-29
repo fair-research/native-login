@@ -36,9 +36,13 @@ def refresh_authorizer_raises_invalid_grant(monkeypatch):
             return {'message': 'invalid_grant', 'code': 'Error'}
 
     def err(*args, **kwargs):
-        raise globus_sdk.exc.AuthAPIError(MockResponse())
-    monkeypatch.setattr(globus_sdk.RefreshTokenAuthorizer,
-                        'check_expiration_time', err)
+        raise globus_sdk.AuthAPIError(MockResponse())
+    try:
+        monkeypatch.setattr(globus_sdk.RefreshTokenAuthorizer,
+                            'check_expiration_time', err)
+    except AttributeError:
+        monkeypatch.setattr(globus_sdk.RefreshTokenAuthorizer,
+                            'ensure_valid_token', err)
 
 
 @pytest.fixture
@@ -67,7 +71,7 @@ def mock_refresh_token_authorizer(monkeypatch, mock_tokens,
                                   mock_token_response):
     def get_new_access_token(self):
         self.access_token = '<Refreshed Access Token>'
-        self._set_expiration_time(int(time.time()) + 60 * 60 * 48)
+        self.expires_at = int(time.time()) + 60 * 60 * 48
         if self.on_refresh is not None:
             # We can't fetch real tokens, so make some up!
             custom_tokens = {'example.on.refresh.success':
