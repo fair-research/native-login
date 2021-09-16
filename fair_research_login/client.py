@@ -205,7 +205,7 @@ class NativeClient(object):
 
                 # Param names changed between globus sdk v2 and v3
                 major_sdk_ver, _ = globus_sdk.version.__version__.split('.', 1)
-                if major_sdk_ver == '2':
+                if int(major_sdk_ver) < 3:
                     params = dict(additional_params=query_params)
                 else:
                     params = dict(query_params=query_params)
