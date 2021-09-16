@@ -1,7 +1,5 @@
 import logging
-from globus_sdk import (NativeAppAuthClient, RefreshTokenAuthorizer,
-                        AccessTokenAuthorizer)
-import globus_sdk.exc
+import globus_sdk
 
 from fair_research_login.code_handler import InputCodeHandler
 from fair_research_login.local_server import LocalServerCodeHandler
@@ -92,7 +90,7 @@ class NativeClient(object):
                  code_handlers=(LocalServerCodeHandler(), InputCodeHandler()),
                  default_scopes=None,
                  *args, **kwargs):
-        self.client = NativeAppAuthClient(*args, **kwargs)
+        self.client = globus_sdk.NativeAppAuthClient(*args, **kwargs)
         self.token_storage = token_storage
         if token_storage is not None:
             self.verify_token_storage(self.token_storage)
@@ -385,7 +383,7 @@ class NativeClient(object):
                                 resource_servers=tokens.keys())
 
         for rs, token_dict in tokens.items():
-            authorizer = RefreshTokenAuthorizer(
+            authorizer = globus_sdk.RefreshTokenAuthorizer(
                 token_dict['refresh_token'],
                 self.client,
                 access_token=token_dict['access_token'],
@@ -420,7 +418,7 @@ class NativeClient(object):
          }
         """
         if token_dict.get('refresh_token') is not None:
-            return RefreshTokenAuthorizer(
+            return globus_sdk.RefreshTokenAuthorizer(
                 token_dict['refresh_token'],
                 self.client,
                 access_token=token_dict['access_token'],
@@ -428,7 +426,7 @@ class NativeClient(object):
                 on_refresh=self.on_refresh,
             )
         else:
-            return AccessTokenAuthorizer(token_dict['access_token'])
+            return globus_sdk.AccessTokenAuthorizer(token_dict['access_token'])
 
     def get_authorizers(self, requested_scopes=None):
         """

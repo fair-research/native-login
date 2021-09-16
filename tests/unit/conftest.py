@@ -1,5 +1,6 @@
 import pytest
 import webbrowser
+import json
 import time
 from copy import deepcopy
 from .mocks import MemoryStorage, MOCK_TOKEN_SET, MOCK_TOKEN_SET_UNDERSCORES
@@ -26,14 +27,21 @@ def mock_tokens():
 
 @pytest.fixture
 def refresh_authorizer_raises_invalid_grant(monkeypatch):
+    monkeypatch.setattr(globus_sdk.GlobusAPIError, '_get_args',
+                        Mock(return_value=[]))
 
     class MockResponse:
         status_code = 400
         headers = {'Content-Type': 'application/json'}
+        request = Mock()
+        url = Mock()
 
         def json(self):
             """(400, 'Error', 'invalid_grant')"""
             return {'message': 'invalid_grant', 'code': 'Error'}
+
+        def text(self):
+            return json.dumps(self.json)
 
     def err(*args, **kwargs):
         raise globus_sdk.AuthAPIError(MockResponse())
@@ -110,6 +118,19 @@ def mock_revoke(monkeypatch):
     monkeypatch.setattr(globus_sdk.NativeAppAuthClient,
                         'oauth2_revoke_token', mock)
     return mock
+
+
+@pytest.fixture
+def mock_sdk_v2(monkeypatch):
+    monkeypatch.setattr(globus_sdk.version, '__version__', '2.0.1')
+    return globus_sdk.version.__version__
+
+
+@pytest.fixture
+def mock_sdk_oauth2_get_authorize_url(monkeypatch):
+    monkeypatch.setattr(globus_sdk.NativeAppAuthClient,
+                        'oauth2_get_authorize_url', Mock())
+    return globus_sdk.NativeAppAuthClient.oauth2_get_authorize_url
 
 
 @pytest.fixture

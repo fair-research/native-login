@@ -31,7 +31,11 @@ def test_authorizer_refresh_hook(live_client):
     auth = live_client.get_authorizers()['auth.globus.org']
     old_auth_tok = auth.access_token
     auth.expires_at = 0
-    auth.check_expiration_time()
+    ensure_valid_token = (
+            getattr(auth, 'check_expiration_time', None) or
+            getattr(auth, 'ensure_valid_token', None)
+    )
+    ensure_valid_token()
 
     saved_token = live_client.load_tokens()['auth.globus.org']['access_token']
     assert old_auth_tok != auth.access_token
@@ -47,8 +51,12 @@ def test_refresh_no_longer_works_after_logout(live_client_destructive):
 
     auth = live_client_destructive.get_authorizers()['auth.globus.org']
     auth.expires_at = 0
-    with pytest.raises(globus_sdk.exc.AuthAPIError):
-        auth.check_expiration_time()
+    with pytest.raises(globus_sdk.AuthAPIError):
+        ensure_valid_token = (
+                getattr(auth, 'check_expiration_time', None) or
+                getattr(auth, 'ensure_valid_token', None)
+        )
+        ensure_valid_token()
 
 
 @pytest.mark.skipif(not RUN_INTEGRATION_TESTS, reason='Integration test')
