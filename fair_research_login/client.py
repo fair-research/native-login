@@ -1,7 +1,5 @@
 import logging
-from globus_sdk import (NativeAppAuthClient, RefreshTokenAuthorizer,
-                        AccessTokenAuthorizer)
-import globus_sdk.exc
+import globus_sdk
 
 from fair_research_login.code_handler import InputCodeHandler
 from fair_research_login.local_server import LocalServerCodeHandler
@@ -92,7 +90,7 @@ class NativeClient(object):
                  code_handlers=(LocalServerCodeHandler(), InputCodeHandler()),
                  default_scopes=None,
                  *args, **kwargs):
-        self.client = NativeAppAuthClient(*args, **kwargs)
+        self.client = globus_sdk.NativeAppAuthClient(*args, **kwargs)
         self.token_storage = token_storage
         if token_storage is not None:
             self.verify_token_storage(self.token_storage)
@@ -116,7 +114,8 @@ class NativeClient(object):
         self.default_scopes = default_scopes
 
     def login(self, requested_scopes=(), refresh_tokens=None, force=False,
-              prefill_named_grant=None, additional_params=None, **kwargs):
+              prefill_named_grant=None, query_params=None,
+              additional_params=None, **kwargs):
         r"""
         Do a Native App Auth Flow to get tokens for requested scopes. This
         first attempts to load tokens and will simply return those if they are
@@ -141,10 +140,14 @@ class NativeClient(object):
           Ask for Globus Refresh Tokens to extend login time.
         ``prefill_named_grant`` (*bool*)
           Use a custom named grant on the consent page
+        ``query_params`` (*dict*)
+          Additional Params used in constructing the authorize URL for Globus
+          Auth. Used for requesting additional features such as for using
+          Globus Sessions. Changed from ``additional_params`` in Globus SDK v2
         ``additional_params`` (*dict*)
           Additional Params used in constructing the authorize URL for Globus
           Auth. Used for requesting additional features such as for using
-          Globus Sessions.
+          Globus Sessions. Deprecated. Use ``query_params`` instead.
         ``force`` (*bool*)
           Force a login flow, even if loaded tokens are valid.
         """
@@ -154,8 +157,13 @@ class NativeClient(object):
             except (LoadError, Exception):
                 pass
 
+        if additional_params is not None:
+            log.warning('login(): "additional_params" is deprecated. '
+                        'Please use "query_params" instead.')
+            query_params = additional_params
+
         auth_code = self.get_code(requested_scopes, refresh_tokens,
-                                  prefill_named_grant, additional_params,
+                                  prefill_named_grant, query_params,
                                   **kwargs)
         token_response = self.client.oauth2_exchange_code_for_tokens(auth_code)
         try:
@@ -165,7 +173,7 @@ class NativeClient(object):
         return token_response.by_resource_server
 
     def get_code(self, requested_scopes, refresh_tokens, prefill_named_grant,
-                 additional_params, **kwargs):
+                 query_params, **kwargs):
         """Attempt all configured code handlers in self.code_handlers from
         first to last. If one is not available (local server will not run
         if it detects it is on a remote connection), the next one in the list
@@ -194,9 +202,15 @@ class NativeClient(object):
                     redirect_uri=ch.get_redirect_uri(),
                     **oauth2_args
                 )
-                auth_url = self.client.oauth2_get_authorize_url(
-                    additional_params=additional_params
-                )
+
+                # Param names changed between globus sdk v2 and v3
+                major_sdk_ver, _ = globus_sdk.version.__version__.split('.', 1)
+                if int(major_sdk_ver) < 3:
+                    params = dict(additional_params=query_params)
+                else:
+                    params = dict(query_params=query_params)
+                auth_url = self.client.oauth2_get_authorize_url(**params)
+
                 try:
                     auth_code = ch.authenticate(url=auth_url)
                     if auth_code:
@@ -369,17 +383,21 @@ class NativeClient(object):
                                 resource_servers=tokens.keys())
 
         for rs, token_dict in tokens.items():
-            authorizer = RefreshTokenAuthorizer(
+            authorizer = globus_sdk.RefreshTokenAuthorizer(
                 token_dict['refresh_token'],
                 self.client,
                 access_token=token_dict['access_token'],
                 expires_at=token_dict['expires_at_seconds'],
             )
             try:
-                authorizer.check_expiration_time()
+                ensure_valid_token = (
+                        getattr(authorizer, 'check_expiration_time', None) or
+                        getattr(authorizer, 'ensure_valid_token', None)
+                )
+                ensure_valid_token()
                 token_dict['access_token'] = authorizer.access_token
                 token_dict['expires_at_seconds'] = authorizer.expires_at
-            except globus_sdk.exc.AuthAPIError as aapie:
+            except globus_sdk.AuthAPIError as aapie:
                 if aapie.message == 'invalid_grant':
                     raise TokensExpired('Refresh Token Expired: ',
                                         resource_servers=[rs])
@@ -400,7 +418,7 @@ class NativeClient(object):
          }
         """
         if token_dict.get('refresh_token') is not None:
-            return RefreshTokenAuthorizer(
+            return globus_sdk.RefreshTokenAuthorizer(
                 token_dict['refresh_token'],
                 self.client,
                 access_token=token_dict['access_token'],
@@ -408,7 +426,7 @@ class NativeClient(object):
                 on_refresh=self.on_refresh,
             )
         else:
-            return AccessTokenAuthorizer(token_dict['access_token'])
+            return globus_sdk.AccessTokenAuthorizer(token_dict['access_token'])
 
     def get_authorizers(self, requested_scopes=None):
         """

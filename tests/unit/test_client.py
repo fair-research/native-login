@@ -1,12 +1,13 @@
 from uuid import uuid4
 import pytest
-from globus_sdk import AccessTokenAuthorizer, RefreshTokenAuthorizer
+import globus_sdk
 
 try:
     from unittest.mock import Mock
 except ImportError:
     from mock import Mock
 
+import fair_research_login
 from fair_research_login.client import NativeClient
 from fair_research_login.token_storage.configparser_token_storage import (
     MultiClientTokenStorage
@@ -17,6 +18,8 @@ from fair_research_login.exc import (
     LoadError, ScopesMismatch, TokensExpired, AuthFailure
 )
 from fair_research_login.version import __version__
+
+GLOBUS_SDK_MAJOR = int(globus_sdk.version.__version__.split('.', 1)[0])
 
 
 def test_version_sanity():
@@ -333,9 +336,9 @@ def test_client_get_authorizers(mock_tokens,
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     for rs, authorizer in cli.get_authorizers().items():
         if rs == 'resource.server.org':
-            assert isinstance(authorizer, RefreshTokenAuthorizer)
+            assert isinstance(authorizer, globus_sdk.RefreshTokenAuthorizer)
         else:
-            assert isinstance(authorizer, AccessTokenAuthorizer)
+            assert isinstance(authorizer, globus_sdk.AccessTokenAuthorizer)
 
 
 def test_client_get_authorizers_by_scope(mock_tokens,
@@ -348,9 +351,9 @@ def test_client_get_authorizers_by_scope(mock_tokens,
     assert len(by_scope) == 5
     for scope, authorizer in by_scope.items():
         if scope == 'custom_scope':
-            assert isinstance(authorizer, RefreshTokenAuthorizer)
+            assert isinstance(authorizer, globus_sdk.RefreshTokenAuthorizer)
         else:
-            assert isinstance(authorizer, AccessTokenAuthorizer)
+            assert isinstance(authorizer, globus_sdk.AccessTokenAuthorizer)
 
 
 def test_client_load_auto_refresh(expired_tokens_with_refresh, mem_storage,
@@ -370,7 +373,11 @@ def test_authorizer_refresh_hook(mock_tokens,
     cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
     rs_auth = cli.get_authorizers()['resource.server.org']
     rs_auth.expires_at = 0
-    rs_auth.check_expiration_time()
+    ensure_valid_token = (
+            getattr(rs_auth, 'check_expiration_time', None) or
+            getattr(rs_auth, 'ensure_valid_token', None)
+    )
+    ensure_valid_token()
 
     tokens = cli.load_tokens()
     assert 'example.on.refresh.success' in tokens.keys()
@@ -399,3 +406,34 @@ def test_non_requested_token_does_not_cancel_load(mem_storage, mock_tokens,
     cli.load_tokens()
     with pytest.raises(TokensExpired):
         cli.load_tokens(requested_scopes=exp)
+
+
+def test_additional_params_raises_warning(monkeypatch, mock_input,
+                                          mock_token_response):
+    log = Mock()
+    monkeypatch.setattr(fair_research_login.client, 'log', log)
+    cli = NativeClient(client_id=str(uuid4()), token_storage=None)
+    cli.login(additional_params={'foo': 'bar'})
+    assert log.warning.called
+
+
+@pytest.mark.skipif(GLOBUS_SDK_MAJOR < 3, reason='Only Test Globus SDK v3+')
+def test_globus_sdk_query_params(mock_sdk_oauth2_get_authorize_url,
+                                 mock_input, mock_token_response):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=None)
+    cli.login(additional_params={'foo': 'bar'})
+    assert mock_sdk_oauth2_get_authorize_url.called
+    mock_sdk_oauth2_get_authorize_url.assert_called_with(
+        query_params={'foo': 'bar'}
+    )
+
+
+def test_globus_sdk_query_params_v2(mock_sdk_oauth2_get_authorize_url,
+                                    mock_input, mock_token_response,
+                                    mock_sdk_v2):
+    cli = NativeClient(client_id=str(uuid4()), token_storage=None)
+    cli.login(additional_params={'foo': 'bar'})
+    assert mock_sdk_oauth2_get_authorize_url.called
+    mock_sdk_oauth2_get_authorize_url.assert_called_with(
+        additional_params={'foo': 'bar'}
+    )
