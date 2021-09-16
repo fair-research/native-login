@@ -19,6 +19,8 @@ from fair_research_login.exc import (
 )
 from fair_research_login.version import __version__
 
+GLOBUS_SDK_MAJOR = int(globus_sdk.version.__version__.split('.', 1)[0])
+
 
 def test_version_sanity():
     assert isinstance(__version__, str)
@@ -415,6 +417,7 @@ def test_additional_params_raises_warning(monkeypatch, mock_input,
     assert log.warning.called
 
 
+@pytest.mark.skipif(GLOBUS_SDK_MAJOR < 3, reason='Only Test Globus SDK v3+')
 def test_globus_sdk_query_params(mock_sdk_oauth2_get_authorize_url,
                                  mock_input, mock_token_response):
     cli = NativeClient(client_id=str(uuid4()), token_storage=None)
