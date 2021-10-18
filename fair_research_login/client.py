@@ -172,8 +172,8 @@ class NativeClient(object):
         token_response = self.client.oauth2_exchange_code_for_tokens(auth_code)
         try:
             self.save_tokens(token_response.by_resource_server)
-        except LoadError:
-            pass
+        except TokenStorageDisabled:
+            log.info('Storage disabled, tokens will not be saved.')
         return token_response.by_resource_server
 
     def get_code(self, requested_scopes, refresh_tokens, prefill_named_grant,
