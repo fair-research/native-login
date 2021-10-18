@@ -154,8 +154,12 @@ class NativeClient(object):
         if force is False:
             try:
                 return self.load_tokens(requested_scopes=requested_scopes)
-            except (LoadError, Exception):
-                pass
+            except LoadError as le:
+                # Log the specific type of exception along with any message.
+                # This gives the user extra info on why a login flow was
+                # started. The typical reason is expiration, which looks like
+                # this: TokensExpired: auth.globus.org, transfer.api.globus.org
+                log.info('{}: {}'.format(le.__class__.__name__, str(le)))
 
         if additional_params is not None:
             log.warning('login(): "additional_params" is deprecated. '
