@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.4](https://github.com/fair-research/native-login/compare/v0.2.3...v0.2.4) (2021-10-19)
+
+
+### Bug Fixes
+
+* login() improperly catching broad exceptions ([013a49c](https://github.com/fair-research/native-login/commit/013a49c7135ca14e0982503f133a63fc2a261490))
+* login() improperly catching broad load errors on token save ([ae14190](https://github.com/fair-research/native-login/commit/ae141908d839089185f21001422cd8a1980370d5))
+
 ### [0.2.3](https://github.com/fair-research/native-login/compare/v0.2.2...v0.2.3) (2021-09-23)
 
 
