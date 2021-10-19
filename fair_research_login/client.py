@@ -154,8 +154,12 @@ class NativeClient(object):
         if force is False:
             try:
                 return self.load_tokens(requested_scopes=requested_scopes)
-            except (LoadError, Exception):
-                pass
+            except LoadError as le:
+                # Log the specific type of exception along with any message.
+                # This gives the user extra info on why a login flow was
+                # started. The typical reason is expiration, which looks like
+                # this: TokensExpired: auth.globus.org, transfer.api.globus.org
+                log.info('{}: {}'.format(le.__class__.__name__, str(le)))
 
         if additional_params is not None:
             log.warning('login(): "additional_params" is deprecated. '
@@ -168,8 +172,8 @@ class NativeClient(object):
         token_response = self.client.oauth2_exchange_code_for_tokens(auth_code)
         try:
             self.save_tokens(token_response.by_resource_server)
-        except LoadError:
-            pass
+        except TokenStorageDisabled:
+            log.info('Storage disabled, tokens will not be saved.')
         return token_response.by_resource_server
 
     def get_code(self, requested_scopes, refresh_tokens, prefill_named_grant,
