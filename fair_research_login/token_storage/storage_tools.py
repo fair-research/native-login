@@ -59,8 +59,8 @@ def check_scopes(tokens, requested_scopes):
     loaded_scopes = get_scopes(tokens)
     diff = set(requested_scopes).difference(set(loaded_scopes))
     if diff:
-        raise ScopesMismatch('Loaded Scopes missing Requested Scopes {}'
-                             ''.format(diff))
+        raise ScopesMismatch('Requested scopes not found: {}. A login is '
+                             'required.'.format(diff))
 
 
 def verify_token_group(tokens):
