@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+### [0.2.6](https://github.com/fair-research/native-login/compare/v0.2.5...v0.2.6) (2021-12-06)
+
+
+### Bug Fixes
+
+* Reword the ScopesMismatch exception for more clarity ([7a28277](https://github.com/fair-research/native-login/commit/7a282779ed6f1e363a88edd0b89c097679094ec4))
+
 ### [0.2.5](https://github.com/fair-research/native-login/compare/v0.2.4...v0.2.5) (2021-12-03)
 
 
