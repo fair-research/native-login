@@ -4,15 +4,10 @@ import json
 import time
 from copy import deepcopy
 from .mocks import MemoryStorage, MOCK_TOKEN_SET, MOCK_TOKEN_SET_UNDERSCORES
-import six
 from fair_research_login import CodeHandler
 
 import globus_sdk
-
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
+from unittest.mock import Mock
 
 
 @pytest.fixture
@@ -94,7 +89,7 @@ def mock_refresh_token_authorizer(monkeypatch, mock_tokens,
 @pytest.fixture
 def mock_input(monkeypatch):
     mock = Mock()
-    monkeypatch.setattr(six.moves, 'input', mock)
+    monkeypatch.setattr('builtins.input', mock)
     return mock
 
 

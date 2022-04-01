@@ -2,9 +2,8 @@ import logging
 import threading
 from contextlib import contextmanager
 import string
-import six
-from six.moves import queue
-from six.moves.urllib.parse import parse_qsl, urlparse, urlunparse
+import queue
+from urllib.parse import parse_qsl, urlparse, urlunparse
 
 try:
     from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
@@ -192,7 +191,7 @@ class RedirectHTTPServer(HTTPServer, object):
     def render_template(self, key):
         tvars = self.vars.get('defaults', {})
         tvars.update(self.vars[key])
-        return six.b(self.template.substitute(tvars))
+        return bytes(self.template.substitute(tvars), 'utf-8')
 
     def return_code(self, code):
         self._auth_code_queue.put_nowait(code)

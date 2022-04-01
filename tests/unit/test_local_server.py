@@ -2,7 +2,7 @@ import threading
 import requests
 
 import pytest
-from six.moves.urllib.parse import urlencode
+from urllib.parse import urlencode
 
 from fair_research_login.local_server import LocalServerCodeHandler
 from fair_research_login.exc import LocalServerError

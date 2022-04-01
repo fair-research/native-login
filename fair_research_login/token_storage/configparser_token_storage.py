@@ -1,6 +1,6 @@
 import os
 import stat
-from six.moves.configparser import ConfigParser
+from configparser import ConfigParser
 
 from fair_research_login.token_storage.storage_tools import (
     flat_pack, flat_unpack

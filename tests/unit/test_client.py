@@ -2,10 +2,7 @@ from uuid import uuid4
 import pytest
 import globus_sdk
 
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
+from unittest.mock import Mock
 
 import fair_research_login
 from fair_research_login.client import NativeClient
