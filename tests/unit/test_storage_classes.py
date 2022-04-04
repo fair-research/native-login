@@ -1,8 +1,5 @@
 import uuid
 import os
-import sys
-
-import pytest
 
 from unittest.mock import Mock, mock_open, patch
 from fair_research_login import (ConfigParserTokenStorage, JSONTokenStorage,
