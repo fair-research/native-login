@@ -206,18 +206,6 @@ def test_save_overwrite_tokens(mem_storage, mock_tokens, mock_revoke):
     assert mem_storage.tokens['auth.globus.org']['refresh_token'] == 'new_ref'
 
 
-def test_login_revokes_old_live_token(mock_revoke, mock_tokens, mem_storage):
-    cli = NativeClient(client_id=str(uuid4()), token_storage=mem_storage)
-    mem_storage.tokens = {'auth.globus.org': mock_tokens['auth.globus.org']}
-    new_tokens = {'auth.globus.org': mock_tokens['auth.globus.org'].copy()}
-    # Mock new login 10 seconds after the first one
-    new_tokens['auth.globus.org']['access_token'] = 'new_ac'
-    new_tokens['auth.globus.org']['expires_at_seconds'] += 10
-    cli.save_tokens(new_tokens)
-
-    assert mock_revoke.call_count == 1
-
-
 def test_client_token_calls_with_no_storage_raise_error(mock_tokens):
     cli = NativeClient(client_id=str(uuid4()), token_storage=None)
     with pytest.raises(LoadError):

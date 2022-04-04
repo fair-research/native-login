@@ -4,8 +4,8 @@ import globus_sdk
 from fair_research_login.code_handler import InputCodeHandler
 from fair_research_login.local_server import LocalServerCodeHandler
 from fair_research_login.token_storage import (
-    MultiClientTokenStorage, check_expired, check_scopes, is_expired,
-    verify_token_group, TOKEN_GROUP_KEYS, get_scopes
+    MultiClientTokenStorage, check_expired, check_scopes,
+    verify_token_group, get_scopes
 )
 from fair_research_login.exc import (
     LoadError, TokensExpired, TokenStorageDisabled, NoSavedTokens, AuthFailure
@@ -258,29 +258,10 @@ class NativeClient(object):
         if self.token_storage is None:
             raise TokenStorageDisabled()
 
-        tokens = {rs: verify_token_group(ts) for rs, ts in tokens.items()}
-        original_tks = self._load_raw_tokens()
-        # These are the only items that should change in the case of an
-        # access token refresh or re-login with the same scope. In that case,
-        # We don't want to revoke the refresh_token but we DO want to test
-        # and refresh the old access token if it is still live.
-        ac_update = {'access_token', 'expires_at_seconds'}
-        for rs, ts in tokens.items():
-            # Fetch the items that have changed.
-            changed = {
-                item for item in TOKEN_GROUP_KEYS
-                if original_tks.get(rs, {}).get(item) != ts.get(item)
-            }
-            # Handle replacing ONLY the access token
-            if changed == ac_update:
-                if not is_expired(original_tks[rs]):
-                    self.client.oauth2_revoke_token(original_tks[rs])
-                original_tks[rs] = ts
-            # Replace everything and revoke the old tokens if they exist.
-            elif changed:
-                if original_tks.get(rs):
-                    self.revoke_token_set({rs: original_tks[rs]})
-                original_tks[rs] = ts
+        new_tokens = {rs: verify_token_group(ts) for rs, ts in tokens.items()}
+        original_tks = {rs: verify_token_group(ts)
+                        for rs, ts, in self._load_raw_tokens().items()}
+        original_tks.update(new_tokens)
         return self.token_storage.write_tokens(original_tks)
 
     def _load_raw_tokens(self):
