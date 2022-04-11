@@ -2,7 +2,6 @@ import os
 import logging
 import webbrowser
 from contextlib import contextmanager
-import six
 
 log = logging.getLogger(__name__)
 
@@ -143,4 +142,4 @@ class InputCodeHandler(CodeHandler):
 
     def get_code(self):
         self.write_message('Please Paste your Auth Code Below: ')
-        return six.moves.input()
+        return input()

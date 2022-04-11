@@ -206,14 +206,9 @@ class NativeClient(object):
                     redirect_uri=ch.get_redirect_uri(),
                     **oauth2_args
                 )
-
-                # Param names changed between globus sdk v2 and v3
-                major_sdk_ver, _ = globus_sdk.version.__version__.split('.', 1)
-                if int(major_sdk_ver) < 3:
-                    params = dict(additional_params=query_params)
-                else:
-                    params = dict(query_params=query_params)
-                auth_url = self.client.oauth2_get_authorize_url(**params)
+                auth_url = self.client.oauth2_get_authorize_url(
+                    query_params=query_params
+                )
 
                 try:
                     auth_code = ch.authenticate(url=auth_url)
@@ -375,11 +370,7 @@ class NativeClient(object):
                 expires_at=token_dict['expires_at_seconds'],
             )
             try:
-                ensure_valid_token = (
-                        getattr(authorizer, 'check_expiration_time', None) or
-                        getattr(authorizer, 'ensure_valid_token', None)
-                )
-                ensure_valid_token()
+                authorizer.ensure_valid_token()
                 token_dict['access_token'] = authorizer.access_token
                 token_dict['expires_at_seconds'] = authorizer.expires_at
             except globus_sdk.AuthAPIError as aapie:

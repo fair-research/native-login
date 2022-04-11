@@ -2,10 +2,7 @@ from uuid import uuid4
 import pytest
 import globus_sdk
 
-try:
-    from unittest.mock import Mock
-except ImportError:
-    from mock import Mock
+from unittest.mock import Mock
 
 import fair_research_login
 from fair_research_login.client import NativeClient
@@ -405,7 +402,6 @@ def test_additional_params_raises_warning(monkeypatch, mock_input,
     assert log.warning.called
 
 
-@pytest.mark.skipif(GLOBUS_SDK_MAJOR < 3, reason='Only Test Globus SDK v3+')
 def test_globus_sdk_query_params(mock_sdk_oauth2_get_authorize_url,
                                  mock_input, mock_token_response):
     cli = NativeClient(client_id=str(uuid4()), token_storage=None)
@@ -413,15 +409,4 @@ def test_globus_sdk_query_params(mock_sdk_oauth2_get_authorize_url,
     assert mock_sdk_oauth2_get_authorize_url.called
     mock_sdk_oauth2_get_authorize_url.assert_called_with(
         query_params={'foo': 'bar'}
-    )
-
-
-def test_globus_sdk_query_params_v2(mock_sdk_oauth2_get_authorize_url,
-                                    mock_input, mock_token_response,
-                                    mock_sdk_v2):
-    cli = NativeClient(client_id=str(uuid4()), token_storage=None)
-    cli.login(additional_params={'foo': 'bar'})
-    assert mock_sdk_oauth2_get_authorize_url.called
-    mock_sdk_oauth2_get_authorize_url.assert_called_with(
-        additional_params={'foo': 'bar'}
     )
