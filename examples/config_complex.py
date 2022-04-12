@@ -33,7 +33,7 @@ class MyTokenStorage(object):
         from native_client.token_storage import flat_pack, flat_unpack
         """
         with open(self.FILENAME, 'w+') as fh:
-            json.dump(tokens.by_resource_server, fh, indent=2)
+            json.dump(tokens, fh, indent=2)
 
     def read_tokens(self):
         """
@@ -55,8 +55,11 @@ class MyTokenStorage(object):
 
         No need to check expiration, that's handled by NativeClient.
         """
-        with open(self.FILENAME) as fh:
-            return json.load(fh)
+        try:
+            with open(self.FILENAME) as fh:
+                return json.load(fh)
+        except Exception:
+            return {}
 
     def clear_tokens(self):
         """

@@ -7,7 +7,7 @@ module.
 from fair_research_login import NativeClient
 
 # Supported built-in storage mechanisms
-from fair_research_login import JSONTokenStorage, ConfigParserTokenStorage  # noqa
+from fair_research_login import JSONTokenStorage  # noqa
 
 app = NativeClient(
     # Registered client on http://developers.globus.org
