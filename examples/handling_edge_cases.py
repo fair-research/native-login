@@ -2,7 +2,6 @@
 Here are some edge cases you may have to deal with in more complex scripts.
 """
 import sys
-import globus_sdk
 from fair_research_login import NativeClient, TokensExpired
 from fair_research_login.exc import LocalServerError, AuthFailure
 
