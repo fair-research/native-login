@@ -2,6 +2,31 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.0](https://github.com/fair-research/native-login/compare/v0.2.6...v0.3.0) (2022-04-12)
+
+
+### ⚠ BREAKING CHANGES
+
+* Drop support for Globus SDK versions 1 and 2
+* Drop support for python 3.5 and 3.6
+* Drop support for Python 2
+* Old tokens replaced by new tokens from login will no
+longer be revoked.
+
+### Features
+
+* Remove save-revocation feature ([7432115](https://github.com/fair-research/native-login/commit/7432115c154f619ae5d156b43ad4be6c4746ad14))
+
+
+### Bug Fixes
+
+* Outdated examples showing incorrect usage ([dbea1b9](https://github.com/fair-research/native-login/commit/dbea1b9056de295f653e46bbc339c8fde71f24ff))
+
+
+* refactor! Drop support for Globus SDK versions 1 and 2 ([1b1fe22](https://github.com/fair-research/native-login/commit/1b1fe229c55dd588be4cfe41bc330d9955f1a5fc))
+* Drop support for Python 2 ([6de15a3](https://github.com/fair-research/native-login/commit/6de15a3d2e0a18afd2ff9af6cd9efd12297eb98a))
+* Drop support for python 3.5 and 3.6 ([51adde4](https://github.com/fair-research/native-login/commit/51adde42ec64d5417dbf75b8f9d8b8796fe59fa8))
+
 ### [0.2.6](https://github.com/fair-research/native-login/compare/v0.2.5...v0.2.6) (2021-12-06)
 
 
