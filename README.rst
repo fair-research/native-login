@@ -1,8 +1,5 @@
-.. image:: https://travis-ci.org/fair-research/native-login.svg?branch=master
-    :target: https://travis-ci.org/fair-research/native-login
-
-.. image:: https://coveralls.io/repos/github/fair-research/native-login/badge.svg?branch=master
-    :target: https://coveralls.io/github/fair-research/native-login?branch=master
+.. image:: https://github.com/fair-research/native-login/actions/workflows/tests.yml/badge.svg
+    :target: https://github.com/fair-research/native-login/actions/workflows/
 
 .. image:: https://img.shields.io/pypi/v/fair-research-login.svg
     :target: https://pypi.python.org/pypi/fair-research-login
@@ -17,9 +14,11 @@
 Fair Research Login
 ===================
 
-This package makes writing Globus scripts and clients a breeze! Easily setup
-token management and local server login with a few lines of code. Easily extend
-components as your app grows and requires its own config.
+Fair Research Login simplifies the Globus Auth Flow to facilitate application
+development by providing automatic token management and streamlining the native
+app grant process. This is useful for writing re-usable scripts and can be used
+as the foundation for new applications without investing significant resources in
+authentication code.
 
 Installation
 ------------
@@ -45,49 +44,20 @@ Usage looks like this:
 
 .. code-block:: python
 
+    from globus_sdk import AuthClient
     from fair_research_login.client import NativeClient
 
-    cli = NativeClient(client_id='<client_id>', app_name='My App')
-    cli.login()
+    # Login
+    cli = NativeClient(client_id='7414f0b4-7d05-4bb6-bb00-076fa3f17cf5', app_name='My App')
+    cli.login(requested_scopes=['openid', 'email', 'profile'], refresh_tokens=True)
 
-
-The following example uses the Auth API to fetch the logged-in user's identity data and print it:
-
-.. code-block:: python
-
-    from globus_sdk import AuthClient
-
+    # Use your tokens
     auth_client = AuthClient(authorizer=cli.get_authorizers()['auth.globus.org'])
     print(auth_client.oauth2_userinfo())
 
-See the 'examples' directory for extended usage.
 
-
-Refresh Tokens
---------------
-
-By default, regular tokens will expire in a couple days. You can request refresh tokens to make
-user logins last forever. This is handy if you need to do long running tasks or small tasks
-every day, but you need to be *absolutely certain these tokens are in a secure location*.
-
-Request refresh tokens with one extra argument to login:
-
-.. code-block:: python
-
-    cli.login(refresh_tokens=True)
-
-
-Testing
+Support
 -------
 
-Install the test requirements:
-
-    pip install -r test-requirements.txt
-
-Run pytest:
-
-    pytest
-
-See coverage with a couple more arguments:
-
-    pytest --cov=fair_research_login tests/
+For any questions or issues using Fair Research Login, please send an email to support@globus.org
+with "Fair Research Login" in the message header.
