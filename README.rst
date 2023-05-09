@@ -23,8 +23,6 @@ authentication code.
 Installation
 ------------
 
-The only requirements are the Globus SDK. Nothing else is required.
-
 Install with pip:
 
 .. code-block:: python
