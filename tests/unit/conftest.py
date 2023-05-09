@@ -1,6 +1,5 @@
 import pytest
 import webbrowser
-import json
 import time
 from copy import deepcopy
 from .mocks import MemoryStorage, MOCK_TOKEN_SET, MOCK_TOKEN_SET_UNDERSCORES
@@ -22,30 +21,15 @@ def mock_tokens():
 
 @pytest.fixture
 def refresh_authorizer_raises_invalid_grant(monkeypatch):
-    monkeypatch.setattr(globus_sdk.GlobusAPIError, '_get_args',
-                        Mock(return_value=[]))
 
-    class MockResponse:
+    class MockException(Exception):
         status_code = 400
-        headers = {'Content-Type': 'application/json'}
-        request = Mock()
-        url = Mock()
+        message = 'invalid_grant'
 
-        def json(self):
-            """(400, 'Error', 'invalid_grant')"""
-            return {'message': 'invalid_grant', 'code': 'Error'}
-
-        def text(self):
-            return json.dumps(self.json)
-
-    def err(*args, **kwargs):
-        raise globus_sdk.AuthAPIError(MockResponse())
-    try:
-        monkeypatch.setattr(globus_sdk.RefreshTokenAuthorizer,
-                            'check_expiration_time', err)
-    except AttributeError:
-        monkeypatch.setattr(globus_sdk.RefreshTokenAuthorizer,
-                            'ensure_valid_token', err)
+    monkeypatch.setattr(globus_sdk, 'AuthAPIError', MockException)
+    monkeypatch.setattr(globus_sdk.RefreshTokenAuthorizer,
+                        'ensure_valid_token',
+                        Mock(side_effect=globus_sdk.AuthAPIError()))
 
 
 @pytest.fixture
