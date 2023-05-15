@@ -21,7 +21,7 @@ authentication code.
    token-storage
    local-server
 
-   sdk-reference
+   sdk-reference/index
 
 
 

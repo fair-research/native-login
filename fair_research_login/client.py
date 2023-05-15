@@ -21,65 +21,60 @@ class NativeClient(object):
     Local Server. It can be used both by simple scripts to simplify the
     auth flow, or by full command line clients that may extend various pieces
     and tailor them to its own needs.
-    **Parameters**
-        ``client_id`` (*string*)
-          The id for your app. Register one at https://developers.globus.org
-        ``app_name`` (*string*)
-          The name of your app. Shows up on the named grant during consent,
-          and the local server browser page by default. It is also propogated
-          to globus_sdk.NativeAppAuthClient.
-        ``default_scopes`` (*list*)
-          A list of scopes which will serve as the default to login() if
-          login is called with no requested_scopes parameter.
-          Example:
-          ['openid', 'profile', 'email']
-        ``token_storage`` (*object*)
-          Any object capable of reading/writing/clearing tokens from/to disk.
-          The object must define these three methods: read_tokens(),
-          write_tokens(tokens), and clear_tokens(), where ``tokens`` is a list
-          of login groups (dicts), each of which contains a token group (dict)
-          keyed by resource server.
 
-          Example ``tokens``:
-          [{
-            'auth.globus.org': {
-                'scope': 'openid profile email',
-                'access_token': '<token>',
-                'refresh_token': None,
-                'token_type': 'Bearer',
-                'expires_at_seconds': 1234567,
-                'resource_server': 'auth.globus.org'
-            }
-          }]
+    An example is below:
 
-          A default token storage object is provided
-          at fair_research_login.token_storage.MultiClientTokenStorage, which
-          saves tokens in a section named by your clients ``client_id``. None
-          may be used to disable token storage.
-        ``code_handlers`` (*list* of :class:`CodeHandler \
-          <fair_research_login.code_handler.CodeHandler>`)
-          A list of Code handlers capable of fetching and returning the
-          authorization code generated as a browser query param in Globus Auth
-          Code handlers are executed in the order they appear in the list, and
-          may be skipped by users with ^C or if they cannot be run (Local
-          Server Code Handler cannot run on remote servers, for example).
+    .. code-block:: python
 
-    ** Methods **
+        cli = NativeClient(client_id='my_id', app_name='my cool app')
+        cli.login(requested_scopes=['openid', 'profile', 'email'])
 
-    *  :py:meth:`.login`
-    *  :py:meth:`.logout`
-    *  :py:meth:`.load_tokens`
-    *  :py:meth:`.get_authorizers`
-    *  :py:meth:`.revoke_token_set`
-    *  :py:meth:`.are_refreshable`
-    *  :py:meth:`.check_scopes`
-    *  :py:meth:`.get_scope_set`
-    *  :py:meth:`.refresh_tokens`
+    :param client_id: The id for your app. Register one at https://developers.globus.org
+    :type client_id: str
+    :param app_name: The name of your app. Shows up on the named grant during consent,
+        and the local server browser page by default. It is also propogated
+        to globus_sdk.NativeAppAuthClient.
+    :type app_name: str
+    :param default_scopes: A list of scopes which will serve as the default to login() if
+        login is called with no requested_scopes parameter.
+        Example:
+        ['openid', 'profile', 'email']
+    :type default_scopes: list
+    :param token_storage: (*object*)
+        Any object capable of reading/writing/clearing tokens from/to disk.
+        The object must define these three methods: read_tokens(),
+        write_tokens(tokens), and clear_tokens(), where ``tokens`` is a list
+        of login groups (dicts), each of which contains a token group (dict)
+        keyed by resource server.
 
-    ** Example **
+        .. code-block:: json
 
-    cli = NativeClient(client_id='my_id', app_name='my cool app')
-    cli.login(requested_scopes=['openid', 'profile', 'email'])
+            [
+                {
+                    "auth.globus.org": {
+                        "scope": "openid profile email",
+                        "access_token": "<token>",
+                        "refresh_token": null,
+                        "token_type": "Bearer",
+                        "expires_at_seconds": 1234567,
+                        "resource_server": "auth.globus.org"
+                    }
+                }
+            ]
+
+        A default token storage object is provided
+        at fair_research_login.token_storage.MultiClientTokenStorage, which
+        saves tokens in a section named by your clients ``client_id``. None
+        may be used to disable token storage.
+    :type token_storage: TokenStorage
+    :param code_handlers: (*list* of :class:`CodeHandler \
+        <fair_research_login.code_handler.CodeHandler>`)
+        A list of Code handlers capable of fetching and returning the
+        authorization code generated as a browser query param in Globus Auth
+        Code handlers are executed in the order they appear in the list, and
+        may be skipped by users with ^C or if they cannot be run (Local
+        Server Code Handler cannot run on remote servers, for example).
+    :type code_handlers:
     """
 
     TOKEN_STORAGE_ATTRS = {'write_tokens', 'read_tokens', 'clear_tokens'}
