@@ -6,3 +6,6 @@ SDK Reference
    :caption: Contents:
 
    client
+   token-storage
+   code-handlers
+   exceptions

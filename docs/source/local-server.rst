@@ -46,7 +46,7 @@ the web page for branding reasons. A simple web page example is below:
       # Turn off token storage for this example
       token_storage=None,
       # Use our custom local server
-      local_server_code_handler=LocalServerCodeHandler(template, template_vars),
+      code_handlers=(LocalServerCodeHandler(template, template_vars)),
       # Automatically populates 'app_name' in template if defined
       app_name='Native Login Examples',
   )

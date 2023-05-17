@@ -9,9 +9,8 @@ from fair_research_login.token_storage.storage_tools import (
 
 class ConfigParserTokenStorage(object):
     """
-    Basic ConfigParser object for both python 2 and 3. This object provides the
-    basics for token storage, and basic save/load functions for writing/reading
-    config data to disk.
+    Basic ConfigParser object which allows for storage without any external
+    Python dependencies.
     """
     DEFAULT_FILENAME = os.path.expanduser('~/.globus-native-apps.cfg')
     DEFAULT_PERMISSION = stat.S_IRUSR | stat.S_IWUSR
@@ -53,9 +52,8 @@ class ConfigParserTokenStorage(object):
 
 class MultiClientTokenStorage(ConfigParserTokenStorage):
     """
-    A very specific implementation for NativeClient, and serves as a nice
-    default for saving tokens for multiple Globus Apps, storing each app's
-    tokens in a separate section by client_id.
+    An extension on ConfigParserTokenStorage which allows for saving tokens
+    in separate sections based on the passed in client_id used for the app.
     """
 
     def set_client_id(self, client_id):

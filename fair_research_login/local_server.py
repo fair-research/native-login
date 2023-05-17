@@ -77,6 +77,11 @@ DEFAULT_VARS = {
 
 
 class LocalServerCodeHandler(CodeHandler):
+    """
+    Local Server Code Handler. Useful when using apps that run on a user
+    machine. Used for automatically copying the auth-code to complete the
+    native app auth flow, for added simplicity.
+    """
 
     def __init__(self, template=None, template_vars=None,
                  hostname='localhost', cli_message=None):
