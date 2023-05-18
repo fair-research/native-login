@@ -11,6 +11,9 @@ class CodeHandler(object):
     Generic handler for the code returned by the Native App Auth Flow in
     Globus Auth. It's intended to be subclassed to define the behavior for
     how the code gets from Globus Auth to the Native App.
+
+    The primary method to override is the ``get_code()`` method, used to
+    complete the auth flow.
     """
     _browser_enabled = True
 
@@ -139,6 +142,9 @@ class CodeHandler(object):
 
 
 class InputCodeHandler(CodeHandler):
+    """
+    Input Code Handler. Can be set as a code handler in a NativeClient.
+    """
 
     def get_code(self):
         self.write_message('Please Paste your Auth Code Below: ')
