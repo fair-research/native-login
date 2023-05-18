@@ -2,4 +2,4 @@ sphinx
 sphinx-rtd-theme
 m2r2
 
-fair-research-login
+git+https://github.com/fair-research/native-login#egg=fair-research-login
