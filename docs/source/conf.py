@@ -11,6 +11,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 import os
 import sys
+import fair_research_login.version
 sys.path.insert(0, os.path.abspath('../'))
 
 # -- Project information -----------------------------------------------------
@@ -23,7 +24,6 @@ author = 'Nickolaus Saint'
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-import fair_research_login.version
 version = release = fair_research_login.version.__version__
 
 
