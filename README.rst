@@ -20,6 +20,8 @@ app grant process. This is useful for writing re-usable scripts and can be used
 as the foundation for new applications without investing significant resources in
 authentication code.
 
+For full documentation, see the `Read the Docs here <https://fair-research-login.readthedocs.io/en/latest/>`_.
+
 Installation
 ------------
 
