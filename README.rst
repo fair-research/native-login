@@ -22,6 +22,15 @@ authentication code.
 
 For full documentation, see the `Read the Docs here <https://fair-research-login.readthedocs.io/en/latest/>`_.
 
+Project Sunset
+--------------
+
+The Globus SDK now natively supports equivalent login functionality! See the `document here <https://globus-sdk-python.readthedocs.io/en/stable/authorization/globus_app/apps.html>`_.
+This newer approach includes a fully customizable pipeline and also supports Client Apps. And functionality is
+directly integrated into service clients.
+
+New code should use these features instead of Fair Research Login. Existing projects should migrate.
+
 Installation
 ------------
 
